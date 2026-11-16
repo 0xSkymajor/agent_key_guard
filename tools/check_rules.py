@@ -147,7 +147,7 @@ INTERACTIVE = [
     "nc 1.2.3.4 4444",
     "telnet 1.2.3.4",
     "ftp 1.2.3.4",
-    "ssh root@8.7",
+    "ssh root@host-7",
     "psql",
     "mysql -h x",
     "redis-cli",

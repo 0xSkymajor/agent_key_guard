@@ -44,7 +44,7 @@ from .setup_ui import (setup_page, done_page, gone_page, https_landing_page,
 adapters.load_builtin()
 
 
-ALLOWED_CIDRS = ["127.0.0.1/32", "::1/128", "192.168.8.0/24"]
+ALLOWED_CIDRS = ["127.0.0.1/32", "::1/128", "192.168.1.0/24"]
 
 
 IP_GUARDED_PREFIXES = ("/health", "/profiles", "/pg/", "/ssh/", "/git/",
@@ -64,7 +64,7 @@ TRUSTED_PROXIES = {"127.0.0.1", "::1"}
 def apply_vault(vault: dict, kek) -> None:
     """把解出的 vault 挂到进程上，并做一次历史迁移与配置刷新。
 
-    启动时**不会**自动调用它：服务以 locked 状态起来，等主人登录解锁时才走这里。
+    启动时**不会**自动调用它：服务以 locked 状态起来，等用户登录解锁时才走这里。
     这样「磁盘上没有任何能直接解密的东西」才成立（REQ-306）。
     """
     Broker.vault = vault
@@ -311,7 +311,7 @@ class Broker(BaseHTTPRequestHandler):
         """锁定态统一拦截。返回 True 表示已经回包，调用方直接 return。
 
         选 423 而不是 401：401 会让 Agent 判定密钥失效、跑去重新申请接入；
-        423 明确表达「暂时锁着，等主人解锁后再重试」，语义不混淆。
+        423 明确表达「暂时锁着，等用户解锁后再重试」，语义不混淆。
         """
         if not Broker.locked:
             return False
@@ -322,7 +322,7 @@ class Broker(BaseHTTPRequestHandler):
             return True
         self._send(423, {
             "error": "vault_locked",
-            "message": "保险库已锁定：服务重启后需要主人在控制台登录一次，"
+            "message": "保险库已锁定：服务重启后需要用户在控制台登录一次，"
                        "解锁后重试即可，不要重新申请密钥",
             "retry_after": 60,
         })
@@ -464,7 +464,7 @@ class Broker(BaseHTTPRequestHandler):
         rec = self._resolve_agent()
         if not rec:
             return False
-        # 把「这条密钥的主人起的名字」挂到当前线程，审批卡片与审计直接取用
+        # 把「这条密钥的用户起的名字」挂到当前线程，审批卡片与审计直接取用
         agents.set_current(rec)
         agents.touch(self.vault, rec["id"], self._ip())
         return True
@@ -1300,7 +1300,7 @@ class Broker(BaseHTTPRequestHandler):
             save_vault_with_key(Broker.key, self.vault)
             audit({"event": "skill_activate", "ok": False, "name": name,
                    "reason": res.get("reason", ""), "src": self._ip()})
-            return self._send(403, {"error": "主人拒绝", "type": "user_denied",
+            return self._send(403, {"error": "用户拒绝", "type": "user_denied",
                                     "reason": res.get("reason") or ""})
         if res.get("duplicate"):
             # 同一条接入请求被重发：前一条已经完成接入，但密钥只在它的响应里出现过一次。
@@ -1324,7 +1324,7 @@ class Broker(BaseHTTPRequestHandler):
     def _api_skill_ticket(self, req: dict):
         """生成一次性接入链接：10 分钟、只能打开一次、打开即签发密钥。
 
-        这样主人不用「先复制 skill 地址、再复制密钥」两步：给 Agent 一条链接就够。
+        这样用户不用「先复制 skill 地址、再复制密钥」两步：给 Agent 一条链接就够。
         """
         token, ttl = agents.issue_ticket(
             self.vault, str(req.get("name") or ""), self._ip())

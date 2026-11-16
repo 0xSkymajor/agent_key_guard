@@ -40,7 +40,7 @@ def set_current(rec: dict | None) -> None:
 
 
 def current_label() -> str:
-    """当前请求的密钥签名（主人创建密钥时起的名字）；没有就返回空串。"""
+    """当前请求的密钥签名（用户创建密钥时起的名字）；没有就返回空串。"""
     return getattr(_CTX, "label", "") or ""
 
 
@@ -156,7 +156,7 @@ def find_by_token(vault: dict, token: str) -> dict | None:
 
 
 # ────────────────────────── 一次性接入票据 ──────────────────────────
-# 目的：主人不必先复制 skill 地址、再复制密钥两次操作。点一次「更新密钥」得到
+# 目的：用户不必先复制 skill 地址、再复制密钥两次操作。点一次「更新密钥」得到
 # 一条带票据的链接，Agent 打开它：既读到 skill 文档，又当场换到一条可用密钥。
 #
 # 约束（缺一不可，否则等于把密钥写在明处）：
@@ -226,7 +226,7 @@ def redeem_ticket(vault: dict, token: str, ip: str = "") -> tuple[str | None, st
             rec["used_at"] = now
             rec["used_ip"] = ip or ""
             aid = create_pending(vault, rec.get("name") or "一次性接入",
-                                 "通过一次性接入链接接入（主人主动生成）", ip)
+                                 "通过一次性接入链接接入（用户主动生成）", ip)
             issued = activate(vault, aid)
             _tickets(vault).pop(tid, None)
             if not issued:

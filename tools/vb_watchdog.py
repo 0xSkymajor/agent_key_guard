@@ -3,7 +3,7 @@
 """
 vb_watchdog.py —— AgentKeyGuard 存活监控
 
-**跑在一台独立的机器上**（不要跑在 AgentKeyGuard 所在的 8.4 自己身上：
+**跑在一台独立的机器上**（不要跑在 AgentKeyGuard 所在的 host-4 自己身上：
 机器死机了就全完了，监控也跟着死）。设计目标是：机器挂了 → 你手机照样收到 Bark。
 
 每次执行做一次探测，由 cron 每分钟唤醒一次（不要在脚本里自己 while sleep，
@@ -63,7 +63,7 @@ CTX.verify_mode = ssl.CERT_NONE
 
 # 显式绕过代理：urllib 默认会读 http_proxy/https_proxy 环境变量。
 # 内网监控要是被塞进一个代理，所有探测都会 502/超时 → 全程误报掉线。
-# （实测踩过：本机有 http_proxy 时 8.4 的 /health 返回 502。）
+# （实测踩过：本机有 http_proxy 时 host-4 的 /health 返回 502。）
 # 自签证书的 context 必须焊进 HTTPSHandler —— OpenerDirector.open()
 # 不接受 context 关键字，只有 urlopen() 接受（实测 TypeError）。
 OPENER = urllib.request.build_opener(
@@ -158,11 +158,11 @@ def check_once() -> int:
             diag = (f"；直连 {DIRECT} 正常（{dir_why}）→ "
                     f"**是 1Panel 反代/TLS/DNS 挂了，Broker 本身活着**")
         else:
-            diag = f"；直连 {DIRECT} 也不通（{dir_why}）→ **Broker 本身或 8.4 挂了**"
+            diag = f"；直连 {DIRECT} 也不通（{dir_why}）→ **Broker 本身或 host-4 挂了**"
     log(f"[失败] 第 {fails}/{FAILS} 次：{URL} {pub_why}{diag}")
 
     if fails >= FAILS and not down:
-        notify(f"🚨 AgentKeyGuard 已掉线，请检查 8.4 或 1Panel 反代！"
+        notify(f"🚨 AgentKeyGuard 已掉线，请检查 host-4 或 1Panel 反代！"
                f"（连续 {FAILS} 次不可达：{pub_why}{diag}）")
         down = True
     save_state({"fails": fails, "down": down})

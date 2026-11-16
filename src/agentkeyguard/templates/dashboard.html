@@ -701,12 +701,12 @@ button.ok,button.danger-btn{font-size:13px}
         </div>
         <div data-type="git" class="hide">
           <div class="f2"><div><label>站点地址</label><input id="pfGitBase" placeholder="http://192.0.2.10:3000"></div>
-            <div><label>用户名</label><input id="pfGitUser" placeholder="agent_bot"></div></div>
+            <div><label>用户名</label><input id="pfGitUser" placeholder="example-bot"></div></div>
           <label>Token<span class="meta" style="margin-left:8px">已配置时留空表示不改</span></label>
           <input id="pfGitToken" type="password" autocomplete="off"
                  placeholder="粘贴 Access Token（HTTPS 用）">
           <label>仓库地址<span class="meta" style="margin-left:8px">仅「测试连接」用，不保存</span></label>
-          <input id="pfGitTestUrl" placeholder="http://192.0.2.10:3000/HomeLab/agent_key_guard.git">
+          <input id="pfGitTestUrl" placeholder="http://192.0.2.10:3000/example-org/agent_key_guard.git">
           <p class="meta">凭证就上面前三条。仓库地址不进凭证：Agent 每次请求自带 URL，
             Broker 校验与站点同源后注入 Token，所以仓库改名、开新库都不用改凭证。</p>
           <p class="meta">只走 HTTPS + Token，不用 SSH 私钥：私钥文件落在 AI 能读的机器上就等于明文。</p>

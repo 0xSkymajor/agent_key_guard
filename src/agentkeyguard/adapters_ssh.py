@@ -84,7 +84,7 @@ class SshAdapter:
 
         # ── 分级拦截（rules.json 每次请求热读取） ──
         # blocked 命中后连审批都不弹：不可逆的破坏只能由人手动执行。
-        # 主人在「敏感权限自动屏蔽」里关掉的规则传进来，匹配时跳过；
+        # 用户在「敏感权限自动屏蔽」里关掉的规则传进来，匹配时跳过；
         # 自保护规则在 rules.is_locked_rule 里硬挡，不受这个列表影响（REQ-307）
         _off = set((getattr(srv, "vault", {}).get("settings") or {}).get("rules_off") or [])
         layer, label = match_rule(raw_cmd, "shell", off=_off)
@@ -126,7 +126,7 @@ class SshAdapter:
             })
 
         # dangerous：先 428 逼 Agent 自我反思，反思非空才推手机审批。
-        # 主人在「灵魂三问」块关掉自审的规则跳过 428，但**照样推审批**：
+        # 用户在「灵魂三问」块关掉自审的规则跳过 428，但**照样推审批**：
         # 省的是一次往返，不是那道闸门（见 rules.needs_reflection）。
         dangerous = layer == "dangerous"
         self_reflection = ""

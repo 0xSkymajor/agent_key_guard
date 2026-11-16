@@ -636,7 +636,7 @@ __LOCKED_NOTE__
       var qs = $$('.q', item), res = $('.res', item);
       for (var i = 0; i < qs.length; i++) { qs[i].classList.add('on'); await wait(240); }
       await wait(360);
-      await type($('[data-type]', item), '重启 8.4 让内核更新生效，断服约 15 秒', 20);
+      await type($('[data-type]', item), '重启 host-4 让内核更新生效，断服约 15 秒', 20);
       pin();
       await wait(600);
       res.classList.add('on');
@@ -692,7 +692,7 @@ __LOCKED_NOTE__
       item.querySelector('.tag').classList.add('on');
       if (c.kind === 'reflect') {
         $$('.q', item).forEach(function (q) { q.classList.add('on'); });
-        $('[data-type]', item).textContent = '重启 8.4 让内核更新生效，断服约 15 秒';
+        $('[data-type]', item).textContent = '重启 host-4 让内核更新生效，断服约 15 秒';
         $('.res', item).classList.add('on');
         item.querySelector('.i-meta').textContent = '高危操作 · 已自省 · 已通过';
         var t = item.querySelector('.tag');

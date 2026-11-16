@@ -3,7 +3,7 @@ agentkeyguard (1.4.4-rc1) unstable; urgency=medium
   * v1.4.4-rc1：UI 细节收敛。
     - 凭证页「暂无凭证」在宽屏（3 列网格）下横跨整行并水平居中，不再落在左上角。
 
- -- agent_bot <agent@ai.com>  Sun, 15 Nov 2026 17:35:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 15 Nov 2026 17:35:00 +0800
 
 agentkeyguard (1.4.3) unstable; urgency=medium
 
@@ -14,7 +14,7 @@ agentkeyguard (1.4.3) unstable; urgency=medium
     - 审计新增 pending_created / approval_dedupe 事件，便于事后追查重复来源；
     - 一次性接入链接核销加锁，修掉并发打开同一链接可能签发两条密钥的竞态。
 
- -- agent_bot <agent@ai.com>  Thu, 12 Nov 2026 22:10:00 +0800
+ -- example-bot <agent@ai.com>  Thu, 12 Nov 2026 22:10:00 +0800
 agentkeyguard (1.4.2) unstable; urgency=medium
 
   * v1.4.2：仅脱敏，无功能改动。
@@ -23,7 +23,7 @@ agentkeyguard (1.4.2) unstable; urgency=medium
     - 默认 IP 白名单常量保持不变（属于功能性配置）；
     - 示例配置中的 PUBLIC_BASE 等改为示例值，不影响运行时默认行为。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 21:30:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 21:30:00 +0800
 
 agentkeyguard (1.4.1) unstable; urgency=medium
 
@@ -37,7 +37,7 @@ agentkeyguard (1.4.1) unstable; urgency=medium
     - 修复 legacy 占位每次升级复活：吊销永久清除，只在真正使用旧 token 时登记；
     - 文档归档、README 截图重拍。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 20:45:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 20:45:00 +0800
 
 agentkeyguard (1.4.1-rc9) unstable; urgency=medium
 
@@ -47,7 +47,7 @@ agentkeyguard (1.4.1-rc9) unstable; urgency=medium
     - 去掉「待审批 / 历史」分段控件与左右双栏，改单列堆叠；
     - 窄屏拦截策略三列改竖排。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 20:25:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 20:25:00 +0800
 
 agentkeyguard (1.4.1-rc8) unstable; urgency=medium
 
@@ -59,7 +59,7 @@ agentkeyguard (1.4.1-rc8) unstable; urgency=medium
     - 升级后第一次打开 Agent 接入页会清掉「从未使用过」的 legacy 占位，无需手动操作；
     - selftest [58] 增加复活/清理/幂等三条回归断言。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 20:40:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 20:40:00 +0800
 
 agentkeyguard (1.4.1-rc7) unstable; urgency=medium
 
@@ -67,7 +67,7 @@ agentkeyguard (1.4.1-rc7) unstable; urgency=medium
     （手里的审批终端：小屏 + 两键 + 麦克风），说明接入方式与当前状态，
     欢迎二次开发；无接口、无配置项，不影响现有审批。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 20:05:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 20:05:00 +0800
 
 agentkeyguard (1.4.1-rc6) unstable; urgency=medium
 
@@ -78,35 +78,35 @@ agentkeyguard (1.4.1-rc6) unstable; urgency=medium
     - 设置子菜单「访问地址」与「HTTPS / 证书」合并为「访问地址与证书」，
       地址、域名、根证书在同一页；删除重复的证书 SAN 提示。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 19:45:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 19:45:00 +0800
 
 agentkeyguard (1.4.1-rc5) unstable; urgency=medium
 
   * 1.4.1 界面 RC5：Agent 接入文案收敛——副标题压成一句「生成一次性接入链接，
     10 分钟有效、仅可使用一次。」，删掉重复的口语化引导段。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 19:15:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 19:15:00 +0800
 
 agentkeyguard (1.4.1-rc4) unstable; urgency=medium
 
   * 1.4.1 界面 RC4：登录页「协作流」更名为「协作流演示」；去掉协作流背后的
     深色模糊衬底（.stream::before），卡片直接叠在背景与 Logo 上。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 19:00:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 19:00:00 +0800
 
 agentkeyguard (1.4.1-rc3) unstable; urgency=medium
 
   * 1.4.1 界面 RC3：登录页改回「表单贴右、协作流回左下」，整页仍是全宽构图
     （不再跟 1720 设计稿宽度走）；表单右边距随窗口 4vw（24–72px）。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 18:45:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 18:45:00 +0800
 
 agentkeyguard (1.4.1-rc2) unstable; urgency=medium
 
   * 1.4.1 界面 RC2：登录页协作流收窄到 220–280px、高度 260，
     与 0.618 处的表单之间留出呼吸感。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 18:20:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 18:20:00 +0800
 
 agentkeyguard (1.4.1-rc1) unstable; urgency=medium
 
@@ -118,7 +118,7 @@ agentkeyguard (1.4.1-rc1) unstable; urgency=medium
       （协作流在 <1440 时隐藏，避免与 0.618 的表单相撞）；
     - 需求文档记录 REQ-200（自定义 Skill，搁置）。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 18:05:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 18:05:00 +0800
 
 agentkeyguard (1.4.0) unstable; urgency=medium
 
@@ -129,14 +129,14 @@ agentkeyguard (1.4.0) unstable; urgency=medium
     - 服务开发规范改为公开 Markdown（/service-spec，打开即读、可复制、可下载），
       Agent 接入保持 /skill；两处都给 AI 一条 URL 就能读。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 17:30:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 17:30:00 +0800
 
 agentkeyguard (1.4.0-rc21) unstable; urgency=medium
 
   * 1.4 界面 RC21：服务页「打开开发规范 / 复制链接 / 下载」三个入口，复制的是当前
     访问地址拼出的 /service-spec 绝对链接，可直接粘给 AI。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 17:20:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 17:20:00 +0800
 
 agentkeyguard (1.4.0-rc20) unstable; urgency=medium
 
@@ -149,7 +149,7 @@ agentkeyguard (1.4.0-rc20) unstable; urgency=medium
     - 601-900 宽下页头的「待审批 / 历史」回到标题右侧同类；
     - ≤900 设置页二级导航与「待审批 / 历史」统一成同一套分段控件。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 17:05:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 17:05:00 +0800
 
 agentkeyguard (1.4.0-rc19) unstable; urgency=medium
 
@@ -159,7 +159,7 @@ agentkeyguard (1.4.0-rc19) unstable; urgency=medium
     - 凭证表单在 ≥601 宽下主机/端口、用户/密码两两并排（窄屏仍单列），保存/测试按钮收拢到右侧；
     - 手机审批的终态页补「返回控制台」入口。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 16:45:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 16:45:00 +0800
 
 agentkeyguard (1.4.0-rc18) unstable; urgency=medium
 
@@ -170,7 +170,7 @@ agentkeyguard (1.4.0-rc18) unstable; urgency=medium
     - 抽屉里「命令」与命令块之间的空档压缩；
     - 手机审批的成功 / 失败页，以及初始化失效页竖向居中，不再下半页全空。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 16:30:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 16:30:00 +0800
 
 agentkeyguard (1.4.0-rc17) unstable; urgency=medium
 
@@ -178,7 +178,7 @@ agentkeyguard (1.4.0-rc17) unstable; urgency=medium
     - 窄屏不再渲染 tab 角标（右下胶囊已表达同一信息），430 下 5 个 tab 完整可见；
     - 顶栏 / 设置二级导航的渐隐只在溢出超过 6px 时出现，390 下「设置」不再被淡化。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 16:15:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 16:15:00 +0800
 
 agentkeyguard (1.4.0-rc16) unstable; urgency=medium
 
@@ -196,7 +196,7 @@ agentkeyguard (1.4.0-rc16) unstable; urgency=medium
     - 登录页 ≤1099 隐藏水印（不再压住表单），面板宽度统一 420px；
     - 手机审批页倒计时提升对比度、拒绝按钮加强、原因输入 16px 防 iOS 缩放。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 16:05:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 16:05:00 +0800
 
 agentkeyguard (1.4.0-rc15) unstable; urgency=medium
 
@@ -205,13 +205,13 @@ agentkeyguard (1.4.0-rc15) unstable; urgency=medium
     - 页头品牌区禁止 flex 收缩，窄窗口不再被 tab 挤掉；
     - 背景只保留底部品牌色光斑。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 17:40:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 17:40:00 +0800
 
 agentkeyguard (1.4.0-rc14) unstable; urgency=medium
 
   * 1.4 界面 RC14：MD 文档按钮保持原位置，仅修正按钮框内文字居中。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 17:25:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 17:25:00 +0800
 
 agentkeyguard (1.4.0-rc13) unstable; urgency=medium
 
@@ -221,7 +221,7 @@ agentkeyguard (1.4.0-rc13) unstable; urgency=medium
     - a.ghost 按钮改为 inline-flex 居中（MD 文档按钮文字框对齐）；
     - 背景移除 Logo，底部改用品牌色光斑透出。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 17:10:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 17:10:00 +0800
 
 agentkeyguard (1.4.0-rc12) unstable; urgency=medium
 
@@ -231,7 +231,7 @@ agentkeyguard (1.4.0-rc12) unstable; urgency=medium
     - 已吊销的 legacy 密钥不再常驻列表（active 的仍可吊销）；
     - 侧栏「最近记录」标注为 5 条速览，与左栏完整历史区分。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 16:55:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 16:55:00 +0800
 
 agentkeyguard (1.4.0-rc11) unstable; urgency=medium
 
@@ -240,7 +240,7 @@ agentkeyguard (1.4.0-rc11) unstable; urgency=medium
       只透出一点 Logo 的光；随窗口缓慢浮动；
     - 服务列表空态改为跨列居中。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 16:35:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 16:35:00 +0800
 
 agentkeyguard (1.4.0-rc10) unstable; urgency=medium
 
@@ -250,7 +250,7 @@ agentkeyguard (1.4.0-rc10) unstable; urgency=medium
     - 右下浮动提醒去掉 backdrop-filter；
     - 解决滚动时背景色块随内容移动/出现横向分界的问题。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 16:20:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 16:20:00 +0800
 
 agentkeyguard (1.4.0-rc9) unstable; urgency=medium
 
@@ -258,7 +258,7 @@ agentkeyguard (1.4.0-rc9) unstable; urgency=medium
     - 顶栏去掉 backdrop-filter 毛玻璃（Chromium 合成层在滚动时出现横向色带），
       改为高不透明度纯色背景 + 发光描边；滚动时不再出现背景断层。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 16:00:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 16:00:00 +0800
 
 agentkeyguard (1.4.0-rc8) unstable; urgency=medium
 
@@ -267,7 +267,7 @@ agentkeyguard (1.4.0-rc8) unstable; urgency=medium
     - 页面背景去掉 fixed 附着，改为随文档铺满，手机长页面不再出现横向色带；
     - body 兜底禁止横向溢出。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 15:45:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 15:45:00 +0800
 
 agentkeyguard (1.4.0-rc7) unstable; urgency=medium
 
@@ -278,7 +278,7 @@ agentkeyguard (1.4.0-rc7) unstable; urgency=medium
     - 折叠箭头统一为 5×5px 折角，替换字符 ▸ 与默认三角；
     - 设计规范补充「按钮与分隔线」章节。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 15:30:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 15:30:00 +0800
 
 agentkeyguard (1.4.0-rc6) unstable; urgency=medium
 
@@ -288,7 +288,7 @@ agentkeyguard (1.4.0-rc6) unstable; urgency=medium
     - approve / setup 页圆角与按钮高度并入统一体系（14/10）；
     - 矮窗口下凭证宣传带自动让位，避免与状态条挤在一起。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 15:15:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 15:15:00 +0800
 
 agentkeyguard (1.4.0-rc5) unstable; urgency=medium
 
@@ -298,7 +298,7 @@ agentkeyguard (1.4.0-rc5) unstable; urgency=medium
       输入框上限 620px、主按钮不再通栏拉满；
     - 圆角统一：卡片 14 / 内嵌盒 10 / 输入 8。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 15:00:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 15:00:00 +0800
 
 agentkeyguard (1.4.0-rc4) unstable; urgency=medium
 
@@ -309,7 +309,7 @@ agentkeyguard (1.4.0-rc4) unstable; urgency=medium
     - 新增「查看详情」右侧抽屉：状态胶囊、自省、类型/目标/请求码、命令复制、
       底部同意/拒绝，与手机审批页同一套语言；ESC / 点遮罩关闭。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 14:45:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 14:45:00 +0800
 
 agentkeyguard (1.4.0-rc3) unstable; urgency=medium
 
@@ -319,7 +319,7 @@ agentkeyguard (1.4.0-rc3) unstable; urgency=medium
       不在工作台时也能看到待审批数量；
     - 初始化向导桌面左侧步骤栏（rc2 后提交，本版进包）。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 14:35:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 14:35:00 +0800
 
 agentkeyguard (1.4.0-rc2) unstable; urgency=medium
 
@@ -329,7 +329,7 @@ agentkeyguard (1.4.0-rc2) unstable; urgency=medium
     - 服务列表双列卡片，Agent 接入加页头，设置改左侧竖向导航；
     - 手机审批页加 300 秒倒计时。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 14:05:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 14:05:00 +0800
 
 agentkeyguard (1.4.0-rc1) unstable; urgency=medium
 
@@ -339,7 +339,7 @@ agentkeyguard (1.4.0-rc1) unstable; urgency=medium
     - 新增 /favicon.svg、/favicon.ico 路由，标签页显示品牌图标。
     - 版本号约定：迭代期用 1.4.0-rcN，最终合并发布时改回 1.4.0。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 14:05:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 14:05:00 +0800
 
 agentkeyguard (1.4.0-rc0) unstable; urgency=medium
 
@@ -350,7 +350,7 @@ agentkeyguard (1.4.0-rc0) unstable; urgency=medium
     - 保留原有登录逻辑与错误提示，仅替换视觉层。
   * 版本号 v1.3.6 -> v1.4.0。
 
- -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 12:40:00 +0800
+ -- example-bot <agent@ai.com>  Sun, 02 Nov 2026 12:40:00 +0800
 
 agentkeyguard (1.3.6) unstable; urgency=medium
 
@@ -472,7 +472,7 @@ agentkeyguard (1.3.0) unstable; urgency=medium
     安卓用户建一条 ntfy 渠道即可收到审批推送。渠道是系统的通知出口，Agent 不可见。
   * 砍掉「Bark 保存后自动落成服务里的 BARK_URL」（语义污染），旧版遗留的
     builtin=notice 服务在解锁迁移时自动清理。
-  * Skill 文档修正：删除已失效的 /api/skill/activate 段落，改为「向主人索取一次性
+  * Skill 文档修正：删除已失效的 /api/skill/activate 段落，改为「向用户索取一次性
     接入链接」，并补 MySQL/Redis/列库的调用约束。
 
  -- Bella <bella@localhost>  Sat, 31 Oct 2026 23:59:00 +0800
@@ -642,7 +642,7 @@ agentkeyguard (1.2.0~rc3) unstable; urgency=medium
   * 联调第三批（Agent 接入体验）：
   * 「已接入 Agent」的「刷新」按钮语义不清，改为红色「更新密钥」，需连点两次确认。
   * 新增一次性接入链接：10 分钟内有效、只能核销一次。Agent 打开链接即当场签发
-    新密钥并写进那次响应，主人不必再分别复制 skill 地址与密钥两次。
+    新密钥并写进那次响应，用户不必再分别复制 skill 地址与密钥两次。
     票据只存 sha256，核销即焚，过期自动清理。
   * 尚无 Agent 接入时的空态文案改为指向「更新密钥」，不再提示手动握手。
   * /skill 的 profiles 列表里，git 凭证改用站点地址，不再显示空 host。
@@ -652,7 +652,7 @@ agentkeyguard (1.2.0~rc3) unstable; urgency=medium
 
 agentkeyguard (1.2.0~rc2) unstable; urgency=medium
 
-  * 联调第二批（真机 8.7 暴露的问题）：
+  * 联调第二批（真机 host-7 暴露的问题）：
   * 装包时若已存在旧配置库，安装输出明确提示「不会进入初始化向导」，
     并支持 AGK_FRESH=1 dpkg -i 跳过旧数据迁移。
   * 已初始化后访问 /setup 改为「配置页已失效，请前往 /dashboard 登录」，

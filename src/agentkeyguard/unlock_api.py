@@ -5,7 +5,7 @@
 
 - `POST /api/unlock/password`  密码 + TOTP 登录（可选「本窗口保持登录」）
 - `POST /api/logout`           退出登录（`/api/lock` 保留为旧别名）
-- `POST /api/session/touch`    主人真实操作触发的滑动续期
+- `POST /api/session/touch`    用户真实操作触发的滑动续期
 - `POST /api/session/bye`      页面正在关闭（sendBeacon 打的标记，宽限后生效）
 - `POST /api/sessions/revoke`  按 sid 踢掉一条在线会话
 - `POST /api/sessions/prune`   一次清掉全部已离线会话记录
@@ -128,7 +128,7 @@ def handle_post(broker, path: str, req: dict) -> bool:
         return True
 
     if path == "/api/session/touch":
-        # 主人真实操作（点/键/滚）触发。touch=True 是**唯一**让不勾选档续期的入口：
+        # 用户真实操作（点/键/滚）触发。touch=True 是**唯一**让不勾选档续期的入口：
         # 其余请求都不续，否则面板自己的轮询会让 15 分钟超时名存实亡。
         s = auth.current(broker, touch=True)
         if not s:

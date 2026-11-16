@@ -23,7 +23,7 @@
 - [ ] LICENSE（Apache-2.0）、SECURITY、CONTRIBUTING、CHANGELOG
 - [ ] CI：selftest + gitleaks + 语法检查 + 依赖锁定
 - [ ] README 定位与对比、威胁模型、3 分钟安装说明
-- [ ] 8.4 机器初始化验收（当前 bootstrap）
+- [ ] host-4 机器初始化验收（当前 bootstrap）
 - [ ] 首发版本冻结为 **2.0.0**（内容 = 1.4.2 + 合规文件），作为 GitHub 第一个公开版本
 
 ## Next：1.5 系列（首发后）

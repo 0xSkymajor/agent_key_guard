@@ -26,7 +26,7 @@
 
 一个跑在家庭内网 7700 端口的常驻服务，站在 **AI Agent** 和 **真实凭证** 之间：
 Agent 只能发「意图」（查这个库、在这台机器跑这条命令），凭证由服务端解密后代为使用，
-高危动作必须由主人在手机上点同意。**AI 拿不到任何密码、私钥或 token。**
+高危动作必须由用户在手机上点同意。**AI 拿不到任何密码、私钥或 token。**
 
 ---
 
@@ -38,7 +38,7 @@ Agent 只能发「意图」（查这个库、在这台机器跑这条命令）�
 | --- | --- |
 | root | root 能读进程内存、能改二进制。`vault-secret` 那层只挡「拿到服务用户权限但不是 root」 |
 | 物理接触 | 拆盘拿走 `vault.enc` 也解不开，但能直接改代码 |
-| 主人的手机被拿走 | 审批是最后一道闸，闸门在手机上 |
+| 用户的手机被拿走 | 审批是最后一道闸，闸门在手机上 |
 | 内网嗅探 | 已全量 HTTPS；HTTP 侧只有证书落地页，业务接口一律 `403 https_required` |
 | 上下文数据本身 | 代码、文档、对话内容会经过模型方/中转站，AKG 只保证凭证不进入这条链路 |
 
@@ -67,7 +67,7 @@ Agent 只能发「意图」（查这个库、在这台机器跑这条命令）�
                                   ├── 解密 vault.enc（主密码在登录时现算 KEK）
                                   ├── 按凭证类型代连目标（pg/mysql/redis/ssh/git）
                                   └── 高危动作 → 推送手机 → 等批准
-[主人浏览器] --HTTPS:7700--> [控制台 / 审批台 / 初始化向导]
+[用户浏览器] --HTTPS:7700--> [控制台 / 审批台 / 初始化向导]
 ```
 
 | 项 | 值 |
@@ -204,7 +204,7 @@ POST /ssh/exec  (Authorization: Bearer <agent_token>)
 - **凭证注入不进 argv**：ssh 走 **paramiko 内存认证**（密码/私钥都在 Python 对象里，不落临时文件、不起 `ssh` 子进程）；
   git 用 `GIT_ASKPASS` 小脚本 + 环境变量（URL 里永不出现 token）；数据库密码只走连接参数。
 - **数据库只读**：`SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY` + 回滚兜底。
-- **`title` 原样显示在审批卡片上**，所以 Skill 明确要求「中文大白话 ≤30 字」，未传时按 `_KIND_CN` 兜底成「执行命令 · 8.7」这类。
+- **`title` 原样显示在审批卡片上**，所以 Skill 明确要求「中文大白话 ≤30 字」，未传时按 `_KIND_CN` 兜底成「执行命令 · host-7」这类。
 
 ---
 
@@ -300,7 +300,7 @@ systemctl stop agentkeyguard
 rm -rf /var/lib/agentkeyguard /var/lib/agentkeyguard-ca /etc/agentkeyguard
 ```
 
-上传 Gitea `PUT /api/packages/HomeLab/generic/agentkeyguard/<ver>/<file>`（basic auth `agent_bot:<token>`）。
+上传 Gitea `PUT /api/packages/example-org/generic/agentkeyguard/<ver>/<file>`（basic auth `example-bot:<token>`）。
 `.deb` 永远不要进源码树。
 
 ---
@@ -312,7 +312,7 @@ rm -rf /var/lib/agentkeyguard /var/lib/agentkeyguard-ca /etc/agentkeyguard
 3. **关窗即退是尽力而为**：`pagehide` + `sendBeacon` 在崩溃、断电、强杀时发不出来，靠所在档位 idle 兜底。
    Chrome「继续上次会话」会恢复会话 cookie，也必须承认。
 4. **`/skill` 是公开可读的**：带任何 Bearer 都返回 200，**不能用来判 token 有效性**；验 token 必须用执行类接口。
-5. **一次性接入链接只有一次**：核销即焚，丢了只能让主人重新生成。
+5. **一次性接入链接只有一次**：核销即焚，丢了只能让用户重新生成。
 6. **TOTP 密钥只在初始化第 2 步出现一次**，完成页不回显（REQ-151）；设置页没有重绑入口，换手机目前只能清库重装。
 7. **会话在内存**：服务重启即全部失效（这也避免了 token 落盘）。
 

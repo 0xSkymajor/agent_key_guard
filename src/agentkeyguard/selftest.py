@@ -452,7 +452,7 @@ def cmd_selftest(args) -> None:
         print("OK（引号/注释/缺失文件）")
 
         print("[25] 标题贯通到审批页 ……", end=" ")
-        e2 = {"request_id": "x", "decision": None, "kind": "ssh.exec", "profile": "fn-8.6",
+        e2 = {"request_id": "x", "decision": None, "kind": "ssh.exec", "profile": "fn-host-6",
               "target": "deploy@192.0.2.30:22", "detail": "命令:\n<b>uptime</b>",
               "source": "192.0.2.10", "code": "AB12", "title": "[修复Bug] 重启服务"}
         pg = _page_pending("x", e2)
@@ -675,7 +675,7 @@ def cmd_selftest(args) -> None:
                      "DELETE FROM watch_list", "UPDATE t SET x=1",
                      "ALTER TABLE t DROP COLUMN c", "VACUUM FULL t", "umount /data"]
         INTERACTIVE = ["sudo -i", "su", "bash -i", "vim /etc/hosts", "top",
-                       "less /var/log/syslog", "tmux attach", "ssh root@8.7",
+                       "less /var/log/syslog", "tmux attach", "ssh root@host-7",
                        "psql", "passwd", "visudo", "crontab -e", "git rebase -i HEAD~3"]
         SAFE = ["systemctl status docker", "systemctl is-active nginx", "docker ps",
                 "uptime", "df -h", "ls -l /var/log", "tail -n 100 /var/log/app.log",
@@ -824,8 +824,8 @@ def cmd_selftest(args) -> None:
         try:
             sh.sent.clear()
             adapters.get("ssh").execute(sh, {"profile": "t", "cmd": "systemctl restart nginx",
-                                            "self_reflection": "我是云端Agent，我在8.5，"
-                                                              "我打算重启8.6上的nginx，确认继续",
+                                            "self_reflection": "我是云端Agent，我在host-5，"
+                                                              "我打算重启host-6上的nginx，确认继续",
                                             "timeout": 1}, "src")
         finally:
             server.ask_approval = real_aa
@@ -902,7 +902,7 @@ def cmd_selftest(args) -> None:
         # ⑤ 高危卡片：红色横幅 + 黄色反思区块
         # 注意 decision 要重置回 None：entry 刚被 ① 拒绝过，带着 "no" 进不了排队
         entry2 = dict(entry, request_id="r40", decision=None, dangerous=True,
-                      self_reflection="我是云端Agent，我现在在8.5，我打算重启8.6上的服务，确认继续")
+                      self_reflection="我是云端Agent，我现在在host-5，我打算重启host-6上的服务，确认继续")
         ph = pending_head()
         assert ph is None or ph.get("request_id") != "r39", "r39 已被拒绝，不该还在排队"
         with approval._PENDING_LOCK:
@@ -1345,10 +1345,10 @@ def cmd_selftest(args) -> None:
         _git = adapters.get("git")
         assert _git is not None and _git.executes is True
         # 凭证只有三条：站点、用户名、Token。仓库名不再进服务端
-        _p1 = _git.build_profile({"base": "http://gitea:3000/", "user": "agent_bot",
+        _p1 = _git.build_profile({"base": "http://gitea:3000/", "user": "example-bot",
                                   "token": "t0k"})
         assert _p1 == {"type": "git", "base": "http://gitea:3000",
-                       "user": "agent_bot", "token": "t0k"}, _p1
+                       "user": "example-bot", "token": "t0k"}, _p1
         assert _git.build_profile({"base": ""}) is None
         _p2 = _git.build_profile({"base": "gitea:3000"})
         assert _p2["base"] == "https://gitea:3000", _p2      # 没写协议时补 https
@@ -1383,13 +1383,13 @@ def cmd_selftest(args) -> None:
         assert ip_allowed("127.0.0.1", "/git/exec") is True
         # 仓库地址由请求带，但必须与凭证登记的站点同源：放开 URL 等于放开 token 的去向
         _gp = {"type": "git", "base": "http://gitea:3000", "user": "u", "token": "t"}
-        _ok_url = "http://gitea:3000/HomeLab/agent_key_guard.git"
+        _ok_url = "http://gitea:3000/example-org/agent_key_guard.git"
         assert git_handler.resolve_url(_gp, _ok_url) == _ok_url
         assert git_handler.resolve_url(_gp, "http://gitea:3000/a/b/c") == \
             "http://gitea:3000/a/b/c", "路径应随意：仓库改名不该被拦"
-        for _bad in ("http://evil.local:3000/HomeLab/x.git",     # 换 host
-                     "http://gitea:3001/HomeLab/x.git",          # 换端口
-                     "https://gitea:3000/HomeLab/x.git",         # 换协议
+        for _bad in ("http://evil.local:3000/example-org/x.git",     # 换 host
+                     "http://gitea:3001/example-org/x.git",          # 换端口
+                     "https://gitea:3000/example-org/x.git",         # 换协议
                      "http://u:p@gitea:3000/x.git",              # userinfo 欺骗
                      "ftp://gitea:3000/x.git",
                      "http://gitea:3000/"):                      # 没有仓库路径
@@ -1591,8 +1591,8 @@ def cmd_selftest(args) -> None:
         print("[63] Gitea 已彻底移出设置 ……", end=" ")
         from . import server as _srv
         _v = {"settings": {"gitea_base": "http://192.0.2.10:3000",
-                           "gitea_user": "agent_bot",
-                           "gitea_repo": "HomeLab/agent_key_guard",
+                           "gitea_user": "example-bot",
+                           "gitea_repo": "example-org/agent_key_guard",
                            "gitea_token": "tok_abc",
                            "bark": "https://api.day.app/x"}}
         _gone = _srv.purge_legacy_gitea_settings(_v)
@@ -1691,7 +1691,7 @@ def cmd_selftest(args) -> None:
         # 换到的 agent 必须是 active 且带尾号（控制台列表要能显示）
         _act = [a for a in agents.list_agents(_tv) if a["status"] == "active"]
         assert _act and _act[0]["token_tail"], _act
-        # 签名（主人生成密钥时写的名字）要一路落到 agent 记录上
+        # 签名（用户生成密钥时写的名字）要一路落到 agent 记录上
         _tv2: dict = {}
         _tk3, _ = agents.issue_ticket(_tv2, "Claude-桌面版", "127.0.0.1")
         _nt3, _ = agents.redeem_ticket(_tv2, _tk3, "127.0.0.1")
@@ -1760,18 +1760,18 @@ def cmd_selftest(args) -> None:
                     "source": "1.2.3.4", "title": "t", "agent": agent,
                     "created": 1.0, "decision": None, "event": _th.Event()}
 
-            _mk("r1", "Claude", "ssh.exec", "8.7")
-            _mk("r2", "Claude", "ssh.exec", "8.7")
-            _mk("r3", "Trae", "ssh.exec", "8.7")
-            _mk("r4", "Claude", "pg.query", "8.7")
+            _mk("r1", "Claude", "ssh.exec", "host-7")
+            _mk("r2", "Claude", "ssh.exec", "host-7")
+            _mk("r3", "Trae", "ssh.exec", "host-7")
+            _mk("r4", "Claude", "pg.query", "host-7")
             _gs = _ap.pending_groups()
             _by = {g["key"]: g for g in _gs}
             # 只合「同签名 + 同类型 + 同凭证」，跨签名/跨类型一律分开
             assert len(_gs) == 3, [g["key"] for g in _gs]
-            assert _by["Claude|ssh.exec|8.7"]["count"] == 2
-            assert _by["Claude|ssh.exec|8.7"]["rids"] == ["r1", "r2"]
-            assert _by["Trae|ssh.exec|8.7"]["count"] == 1
-            assert _by["Claude|pg.query|8.7"]["count"] == 1
+            assert _by["Claude|ssh.exec|host-7"]["count"] == 2
+            assert _by["Claude|ssh.exec|host-7"]["rids"] == ["r1", "r2"]
+            assert _by["Trae|ssh.exec|host-7"]["count"] == 1
+            assert _by["Claude|pg.query|host-7"]["count"] == 1
             # 单条语义保留：徽标与旧前端仍可用
             assert _ap.pending_head()["request_id"] == "r1"
             assert _ap.pending_head()["queue"] == 4
@@ -1813,7 +1813,7 @@ def cmd_selftest(args) -> None:
         assert "__FIRST_LINK__" not in _done_html
         assert "__FIRST_NAME__" not in _done_html
         # REQ-151：完成页不再回显 TOTP 密钥（哪怕上游把字段塞进来也不许渲染）。
-        # 它长得像一条密钥，和「首个接入链接」并排出现会让主人以为要发给 AI。
+        # 它长得像一条密钥，和「首个接入链接」并排出现会让用户以为要发给 AI。
         assert "ABCDEFGHIJKLMNOP" not in _done_html, "完成页又冒出 TOTP 明文了"
         assert "__TOTP" not in _done_html, "完成页还留着 TOTP 占位符"
         _setup_src = Path(__import__("agentkeyguard.setup", fromlist=["x"]).__file__).read_text(encoding="utf-8")
@@ -1829,7 +1829,7 @@ def cmd_selftest(args) -> None:
         print("OK（签名进 DRAFT / 完成页给链接 / 占位符替换干净 / 向导已接）")
 
         print("[71] 审批标题兜底中文 / Skill 要求写人话 ……", end=" ")
-        # Agent 不传 title 时，不能把 `ssh.exec → 192.0.2.11` 这种机器话甩给主人
+        # Agent 不传 title 时，不能把 `ssh.exec → 192.0.2.11` 这种机器话甩给用户
         from . import approval as _ap2
         assert _ap2._KIND_CN.get("ssh.exec") == "执行命令", _ap2._KIND_CN
         assert _ap2._KIND_CN.get("pg.query") == "查询数据库"

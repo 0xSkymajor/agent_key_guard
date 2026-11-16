@@ -88,7 +88,7 @@ def render_json(vault: dict, base: str) -> dict:
             "preferred": "application/json",
             "human": "text/markdown",
             "token": "不提供；Git Token 存在 Broker 的 git 凭证里，Agent 只提交动作",
-            "locked": "423 表示服务锁定（主人重启后待登录解锁），不是密钥失效；"
+            "locked": "423 表示服务锁定（用户重启后待登录解锁），不是密钥失效；"
                       "等一会儿重试即可，不要重新申请密钥",
         },
         "profiles": _profiles_json(vault),
@@ -120,7 +120,7 @@ def _git_md(vault: dict) -> str:
             who = f"（用户 {p['user']}）" if p.get("user") else ""
             lines.append(f"  - `{p['name']}` → 站点 `{p['base']}`{who}")
     else:
-        lines.append("- 尚无 git 凭证：请主人在「凭证」页添加（站点地址 + 用户名 + Token）。")
+        lines.append("- 尚无 git 凭证：请用户在「凭证」页添加（站点地址 + 用户名 + Token）。")
     lines += ["", "```bash", *g["commands"], "```"]
     return "\n".join(lines)
 

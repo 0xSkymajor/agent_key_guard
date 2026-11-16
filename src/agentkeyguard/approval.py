@@ -28,7 +28,7 @@ from .storage import audit
 PENDING_APPROVALS: dict[str, dict] = {}
 _PENDING_LOCK = threading.RLock()      # 可重入：持锁时读队列不会自锁
 
-# 审批卡片上的兜底标题：Agent 没写 title 时，至少让主人看懂在做什么
+# 审批卡片上的兜底标题：Agent 没写 title 时，至少让用户看懂在做什么
 _KIND_CN = {
     "ssh.exec": "执行命令",
     "pg.query": "查询数据库",
@@ -64,7 +64,7 @@ def approval_identity(kind: str, profile: str, target: str, detail: str,
                       agent: str = "") -> str:
     """同一动作的指纹，用来吸收「客户端把同一条请求发了两遍」。
 
-    为什么需要：审批要等主人（最长 5 分钟），这期间客户端可能因为自己那层的
+    为什么需要：审批要等用户（最长 5 分钟），这期间客户端可能因为自己那层的
     超时/重试把**完全相同的请求**再发一次。以前这会在工作台上变成两张卡、
     「批准全部 2 条」，同一件事批一次却执行两遍。指纹只认「同一 Agent、
     同一类型、同一目标、同一条命令/语句」，换 Agent 或换命令都不合并。
@@ -276,8 +276,8 @@ def ask_approval(kind: str, profile: str, target: str, detail: str,
     dangerous=True（命中 rules.json 的 dangerous 层且自审已通过）时：
       · Bark 标题加 🚨🚨 高危操作！前缀，工作台卡片顶部出红色横幅；
       · Agent 的 self_reflection 原文一起进卡片，用黄色区块展示，
-        标题"🤖 Agent 的自我反思"——让主人确认它没犯迷糊。
-    reflection_off=True 表示主人在「灵魂三问」块关掉了这条规则的自审：
+        标题"🤖 Agent 的自我反思"——让用户确认它没犯迷糊。
+    reflection_off=True 表示用户在「灵魂三问」块关掉了这条规则的自审：
     没有反思原文可展示，卡片改成提示"本条规则已关闭自审，仍在此等待审批"，
     免得出现一块空白的黄色区域让人以为是显示故障。
     out 非空时回填 {"ok","decision","reason"}，供调用方做拒绝原因透传。
@@ -287,7 +287,7 @@ def ask_approval(kind: str, profile: str, target: str, detail: str,
         return True
 
     # 兜底也要说人话：Agent 不传 title 时，别把 `ssh.exec → 192.0.2.11` 这种
-    # 机器话甩给主人——历史里一长串一样的东西就是这么来的。
+    # 机器话甩给用户——历史里一长串一样的东西就是这么来的。
     title = re.sub(r"\s+", " ", (title or "").strip())[:40]
     if not title:
         title = f"{_KIND_CN.get(kind, kind)} · {profile}"
@@ -305,7 +305,7 @@ def ask_approval(kind: str, profile: str, target: str, detail: str,
         "detail": detail,
         "source": source,
         "title": title,
-        # 这条密钥的名字（主人生成密钥时写的签名）：多会话并行时靠它区分谁在请求
+        # 这条密钥的名字（用户生成密钥时写的签名）：多会话并行时靠它区分谁在请求
         "agent": agents.current_label(),
         "code": approval_code(kind, profile, detail),
         "dangerous": bool(dangerous),
@@ -328,7 +328,7 @@ def ask_approval(kind: str, profile: str, target: str, detail: str,
                    "src": source})
 
     if twin is not None:
-        # 已经有一条一模一样的在等主人：复用它的结论，自己不再推送、不再执行。
+        # 已经有一条一模一样的在等用户：复用它的结论，自己不再推送、不再执行。
         # 调用方看 out["duplicate"] 决定「不要重复执行」，所以同一件事只做一遍。
         print(f"  [去重] 同一动作已在等待审批（{twin.get('request_id')}），"
               f"复用，不重复推送", flush=True)

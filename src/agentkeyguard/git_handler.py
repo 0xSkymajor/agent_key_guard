@@ -81,7 +81,7 @@ def _askpass_script() -> Path:
         p.write_text(
             "#!/bin/sh\n"
             'case "$1" in\n'
-            '  *sername*|*ser\\ name*) printf "%s\\n" "${AKG_GIT_USER:-agent_bot}" ;;\n'
+            '  *sername*|*ser\\ name*) printf "%s\\n" "${AKG_GIT_USER:-example-bot}" ;;\n'
             '  *) printf "%s\\n" "${AKG_GIT_TOKEN:-}" ;;\n'
             "esac\n",
             encoding="utf-8")
@@ -100,7 +100,7 @@ def _env(profile: dict) -> dict:
     env["GIT_CONFIG_NOSYSTEM"] = "1"
     env["GIT_TERMINAL_PROMPT"] = "0"
     env["GIT_ASKPASS"] = str(_askpass_script())
-    env["AKG_GIT_USER"] = profile.get("user") or "agent_bot"
+    env["AKG_GIT_USER"] = profile.get("user") or "example-bot"
     env["AKG_GIT_TOKEN"] = profile.get("token") or ""
     env["LC_ALL"] = "C"
     return env
@@ -142,7 +142,7 @@ def resolve_url(profile: dict, req_url: str = "") -> str:
         if legacy:
             return legacy
         raise GitError("需要 url：完整仓库地址，"
-                       "如 http://192.0.2.10:3000/HomeLab/agent_key_guard.git")
+                       "如 http://192.0.2.10:3000/example-org/agent_key_guard.git")
     if url.startswith("-") or any(c in url for c in BAD_ARG_CHARS):
         raise GitError("url 不合法")
     p = urllib.parse.urlsplit(url)

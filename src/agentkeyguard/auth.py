@@ -10,7 +10,7 @@
   · 每条会话只有一个 `idle` 到期时刻，任何一次成功续期都推后到 `now + span`；
   · span 由 remember 决定：勾选「本窗口保持登录」= `SESSION_IDLE_KEEP`（4 小时），
     不勾 = `SESSION_IDLE`（15 分钟）；
-  · 续期来源只有两种：勾选档的任意请求（含面板 3 秒轮询），或不勾档时主人真实
+  · 续期来源只有两种：勾选档的任意请求（含面板 3 秒轮询），或不勾档时用户真实
     操作触发的 `touch()`。Agent 的请求不带 cookie，且「新审批入队」刻意不续期，
     所以谁也拖不成永久会话；
   · cookie 恒为会话级（不写 `Max-Age`），关浏览器即被丢弃 —— 这才是「关窗即退」
@@ -170,7 +170,7 @@ def device_of(ua: str) -> str:
 def current(handler, touch: bool = False):
     """读当前会话；过期即删并落审计。
 
-    `touch=True` 只在 `POST /api/session/touch` 里传：那是主人真实操作触发的
+    `touch=True` 只在 `POST /api/session/touch` 里传：那是用户真实操作触发的
     续期，不勾选档也认。其余请求一律走 `touch=False`，此时只有 remember 会话
     才续期 —— 否则面板自己的轮询就能让 15 分钟超时彻底失效。
 
