@@ -202,13 +202,9 @@ PYTHONPATH=src python -m agentkeyguard selftest   # 自检
 | 文件 | 内容 |
 | --- | --- |
 | `docs/ARCHITECTURE.md` | 架构与模块边界 |
-| `docs/design/AgentKeyGuard-需求文档.md` | 功能需求与逐条验收状态 |
-| `docs/design/AgentKeyGuard-开发规范.md` | 我们之间的约定（Token-only、版本号、联调流程等） |
-| `docs/design/AgentKeyGuard-视觉优化方案-v2.md` | 1.4 视觉方案与组件规范（已实施） |
 | `ROADMAP.md` | 长期方向：Next / Later / 明确不做 |
+| `SKILL.md` | Agent 接入说明（对应 `/skill`） |
 | `LICENSE` | Apache-2.0 全文 |
-| `docs/archive/SKILL-早期样例.md` | 早期 Skill 静态样例（已过时，现行以 `/skill` 为准） |
-| `docs/ANCHOR-上下文锚点.md` | 上下文锚点，供新会话快速对齐 |
 
 ## 边界（Known Limits）
 
