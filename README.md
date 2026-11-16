@@ -195,7 +195,7 @@ Agent 首次接入会调用激活接口并附一段自述，主人在手机上�
 PYTHONPATH=src python -m agentkeyguard selftest   # 自检
 ```
 
-约定见 `docs/design/AgentKeyGuard-开发规范.md`：**先联调、后打包**，联调阶段不碰 deb。
+开发约定：**先联调、后打包**，联调阶段不碰 deb。
 
 ## 文档
 
