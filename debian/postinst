@@ -1,0 +1,117 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    configure)
+        # 1) 专用系统用户与组
+        if ! getent group agentkeyguard >/dev/null 2>&1; then
+            addgroup --system agentkeyguard
+        fi
+        if ! getent passwd agentkeyguard >/dev/null 2>&1; then
+            adduser --system --ingroup agentkeyguard --home /var/lib/agentkeyguard \
+                --no-create-home --disabled-login --gecos "AgentKeyGuard" \
+                agentkeyguard
+        fi
+
+        # 2) 目录与权限
+        install -d -m 0750 -o root -g agentkeyguard /etc/agentkeyguard
+        # 服务端密钥（REQ-308）：参与 KEK 派生，放在 vault 目录之外、root-only，
+        # 由 systemd LoadCredential 以 fd 交给服务——服务自己读不到源文件，
+        # 「拿到服务用户权限但不是 root」的攻击者也就拿不到它。
+        # ⚠ 已存在时绝不覆盖：换了它，用旧库加密的数据永久解不开。
+        if [ ! -f /etc/agentkeyguard/vault-secret ]; then
+            head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n' \
+                > /etc/agentkeyguard/vault-secret
+            # 属主 root、组 agentkeyguard、权限 0640：服务（组内）能读，
+            # 其他普通用户读不到。不用 0600 是因为服务以非 root 运行，
+            # 读不到就相当于这一层永远不生效。
+            chown root:agentkeyguard /etc/agentkeyguard/vault-secret 2>/dev/null || true
+            chmod 0640 /etc/agentkeyguard/vault-secret 2>/dev/null || true
+        fi
+        install -d -m 0700 -o agentkeyguard -g agentkeyguard /var/lib/agentkeyguard
+        # 持久 CA：不随 remove/purge 删除；旧版 tls/ca.* 首次升级时迁移
+        install -d -m 0700 -o agentkeyguard -g agentkeyguard /var/lib/agentkeyguard-ca
+        if [ -f /var/lib/agentkeyguard/tls/ca.crt ] && [ ! -f /var/lib/agentkeyguard-ca/ca.crt ]; then
+            cp -a /var/lib/agentkeyguard/tls/ca.crt /var/lib/agentkeyguard-ca/ca.crt
+            cp -a /var/lib/agentkeyguard/tls/ca.key /var/lib/agentkeyguard-ca/ca.key 2>/dev/null || true
+        fi
+        chown -R agentkeyguard:agentkeyguard /var/lib/agentkeyguard-ca 2>/dev/null || true
+        chmod 0700 /var/lib/agentkeyguard-ca 2>/dev/null || true
+        chmod 0600 /var/lib/agentkeyguard-ca/ca.key 2>/dev/null || true
+
+        # 3) 随包配置的权限
+        chmod 0644 /etc/agentkeyguard/rules.json 2>/dev/null || true
+        chown root:agentkeyguard /etc/agentkeyguard/.env.example 2>/dev/null || true
+        chmod 0644 /etc/agentkeyguard/.env.example 2>/dev/null || true
+        chown root:agentkeyguard /etc/agentkeyguard/agentkeyguard.env.example 2>/dev/null || true
+        chmod 0644 /etc/agentkeyguard/agentkeyguard.env.example 2>/dev/null || true
+
+        # 4) 迁移旧版数据（源存在且目标不存在才拷贝）
+        # AGK_FRESH=1 dpkg -i 可跳过：要测全新初始化时用，避免旧库被静默继承
+        if [ "${AGK_FRESH:-0}" = "1" ]; then
+            echo "  [AgentKeyGuard] AGK_FRESH=1：跳过旧数据迁移"
+        elif [ -d /root/.agentkeyguard ]; then
+            for f in vault.enc token audit.log; do
+                if [ -f "/root/.agentkeyguard/$f" ] && [ ! -e "/var/lib/agentkeyguard/$f" ]; then
+                    cp -a "/root/.agentkeyguard/$f" "/var/lib/agentkeyguard/$f"
+                    chown agentkeyguard:agentkeyguard "/var/lib/agentkeyguard/$f"
+                    chmod 0600 "/var/lib/agentkeyguard/$f"
+                fi
+            done
+        fi
+        if [ -f /opt/agentkeyguard/.env ] && [ ! -e /etc/agentkeyguard/.env ]; then
+            cp -a /opt/agentkeyguard/.env /etc/agentkeyguard/.env
+            chown root:agentkeyguard /etc/agentkeyguard/.env
+            chmod 0640 /etc/agentkeyguard/.env
+        fi
+
+        # 5) 首次安装：生成可编辑的 .env 与 systemd env 文件
+        if [ ! -e /etc/agentkeyguard/.env ]; then
+            cp /etc/agentkeyguard/.env.example /etc/agentkeyguard/.env
+            chown root:agentkeyguard /etc/agentkeyguard/.env
+            chmod 0640 /etc/agentkeyguard/.env
+        fi
+        if [ ! -e /etc/agentkeyguard/agentkeyguard.env ]; then
+            cat > /etc/agentkeyguard/agentkeyguard.env <<'EOF'
+# AgentKeyGuard systemd 环境文件
+# 主密码由 Web 初始化写入 /var/lib/agentkeyguard/master.key，无需在此填写。
+AGENTKEYGUARD_PORT=7700
+EOF
+            chown root:root /etc/agentkeyguard/agentkeyguard.env
+            chmod 0600 /etc/agentkeyguard/agentkeyguard.env
+        fi
+
+        # 6) systemd：启动初始化模式（首次安装会打印 /setup URL）
+        if command -v systemctl >/dev/null 2>&1; then
+            systemctl daemon-reload || true
+            systemctl enable agentkeyguard.service || true
+            systemctl restart agentkeyguard.service || true
+        fi
+
+        IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+        IP=${IP:-127.0.0.1}
+        echo ""
+        echo "AgentKeyGuard 已安装并启动。"
+        echo "  打开: http://$IP:7700/"
+        echo "  首次打开并完成配置的人将成为管理员。"
+        # 旧库存在时服务不会进初始化向导：必须当场说清楚，
+        # 否则用户打开首页看到登录页会以为装坏了（P1）
+        if [ -f /var/lib/agentkeyguard/vault.enc ]; then
+            echo ""
+            echo "  注意：检测到已有配置库 /var/lib/agentkeyguard/vault.enc。"
+            echo "        服务会按已有配置启动，不会进入初始化向导；"
+            echo "        登录密码与动态码是当初初始化时设的那一份。"
+            echo "        如需全新初始化，先停服务再清空数据目录，例如："
+            echo "          systemctl stop agentkeyguard"
+            echo "          mv /var/lib/agentkeyguard /var/lib/agentkeyguard.bak-$(date +%m%d)"
+            echo "          install -d -m 0700 -o agentkeyguard -g agentkeyguard /var/lib/agentkeyguard"
+            echo "          systemctl start agentkeyguard"
+            echo "        （CA 目录 /var/lib/agentkeyguard-ca 建议保留，手机会沿用已信任的根证书）"
+        fi
+        echo ""
+        ;;
+esac
+
+#DEBHELPER#
+
+exit 0

@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" font-family="PingFang SC,Microsoft YaHei,system-ui,sans-serif">
+<defs>
+  <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#8FD0FF"/>
+  </marker>
+  <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#FFC24B"/>
+  </marker>
+  <marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#3BE0A8"/>
+  </marker>
+</defs>
+<rect width="1200" height="760" fill="#05081C"/>
+<text x="48" y="60" fill="#EBF2FF" font-size="27" font-weight="700">一次审批是怎么连起来的</text>
+<text x="48" y="88" fill="#6C7C9F" font-size="14">请求挂起 → 推送到手机/工作台 → 人拍板 → 才执行；超时自动拒绝，全程留痕</text>
+
+<!-- lanes -->
+<text x="60" y="140" fill="#8FD0FF" font-size="13" font-weight="700">Agent</text>
+<text x="500" y="140" fill="#8FD0FF" font-size="13" font-weight="700">Broker（本机 :7700）</text>
+<text x="960" y="140" fill="#FFC24B" font-size="13" font-weight="700">人（手机 / 工作台）</text>
+<line x1="60" y1="152" x2="1140" y2="152" stroke="#8FD0FF" stroke-opacity=".18"/>
+<line x1="60" y1="156" x2="60" y2="660" stroke="#8FD0FF" stroke-opacity=".12"/>
+<line x1="420" y1="156" x2="420" y2="660" stroke="#8FD0FF" stroke-opacity=".12"/>
+<line x1="900" y1="156" x2="900" y2="660" stroke="#FFC24B" stroke-opacity=".18"/>
+
+<!-- 1 -->
+<rect x="60" y="186" width="306" height="58" rx="10" fill="#0B1035" stroke="#8FD0FF" stroke-opacity=".35"/>
+<text x="78" y="212" fill="#EBF2FF" font-size="13" font-weight="600">① 发起请求</text>
+<text x="78" y="232" fill="#8FA3B8" font-size="11.5">POST /pg/query · /ssh/exec · /git/exec</text>
+<path d="M366 215 L470 215" stroke="#8FD0FF" stroke-width="2" marker-end="url(#ar)"/>
+
+<!-- 2 -->
+<rect x="470" y="186" width="376" height="58" rx="10" fill="#131B44" stroke="#8FD0FF" stroke-opacity=".45"/>
+<text x="488" y="212" fill="#EBF2FF" font-size="13" font-weight="600">② 规则引擎分类，请求挂起</text>
+<text x="488" y="232" fill="#8FA3B8" font-size="11.5">生成 request_id · 高危附带 Agent 自省</text>
+
+<!-- 3 -->
+<path d="M846 215 L960 215" stroke="#FFC24B" stroke-width="2" marker-end="url(#arw)"/>
+<rect x="960" y="186" width="180" height="58" rx="10" fill="#0B1035" stroke="#FFC24B" stroke-opacity=".4"/>
+<text x="978" y="212" fill="#EBF2FF" font-size="13" font-weight="600">③ 推送审批</text>
+<text x="978" y="232" fill="#8FA3B8" font-size="11.5">Bark 通知 + 工作台卡片</text>
+
+<!-- 4 -->
+<rect x="960" y="294" width="180" height="70" rx="10" fill="#0B1035" stroke="#FFC24B" stroke-opacity=".4"/>
+<text x="978" y="320" fill="#EBF2FF" font-size="13" font-weight="600">④ 点开链接</text>
+<text x="978" y="340" fill="#8FA3B8" font-size="11.5">/approve 待审批页</text>
+<text x="978" y="358" fill="#8FA3B8" font-size="11.5">看命令原文 + 自省</text>
+<path d="M960 330 L860 330" stroke="#FFC24B" stroke-width="2" marker-end="url(#arw)"/>
+<text x="880" y="320" fill="#FFC24B" font-size="11">提交决策</text>
+
+<!-- 5 -->
+<rect x="470" y="294" width="376" height="104" rx="10" fill="#131B44" stroke="#3BE0A8" stroke-opacity=".45"/>
+<text x="488" y="320" fill="#3BE0A8" font-size="13" font-weight="600">⑤ 同意 → 才真正执行</text>
+<text x="488" y="342" fill="#A8B8D8" font-size="11.5">建立到目标系统的连接，注入凭证，跑这一条动作</text>
+<text x="488" y="362" fill="#A8B8D8" font-size="11.5">结果脱敏后回给 Agent</text>
+<text x="488" y="384" fill="#6C7C9F" font-size="11">拒绝则带理由原文回传，不执行任何命令</text>
+<path d="M470 346 L372 346" stroke="#3BE0A8" stroke-width="2" marker-end="url(#arg)"/>
+<text x="300" y="336" fill="#3BE0A8" font-size="11">结果 / 拒绝理由</text>
+
+<!-- 6 audit -->
+<rect x="470" y="440" width="376" height="72" rx="10" fill="#0B1035" stroke="#8FD0FF" stroke-opacity=".25"/>
+<text x="488" y="466" fill="#EBF2FF" font-size="13" font-weight="600">⑥ 写入审计</text>
+<text x="488" y="486" fill="#A8B8D8" font-size="11.5">谁、何时、哪个密钥、做了什么、结果 —— 只存摘要</text>
+<path d="M658 398 L658 436" stroke="#8FD0FF" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+
+<!-- constraints -->
+<rect x="60" y="560" width="1080" height="112" rx="14" fill="#0D1330" stroke="#8FD0FF" stroke-opacity=".22"/>
+<text x="84" y="592" fill="#EBF2FF" font-size="14" font-weight="700">几条硬约束</text>
+<text x="84" y="618" fill="#A8B8D8" font-size="12">· 强制串行：同一时刻只放一条请求，避免「批量同意」掩盖中间某条</text>
+<text x="84" y="640" fill="#A8B8D8" font-size="12">· 审批链接 300 秒有效，超时自动拒绝；一次性链接打开即作废</text>
+<text x="84" y="662" fill="#A8B8D8" font-size="12">· 同意/拒绝都记审计；拒绝理由会原样回给 Agent，方便它调整方案</text>
+</svg>

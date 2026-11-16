@@ -1,0 +1,23 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    remove|purge)
+        # 卸载清用户数据；持久 CA 在 /var/lib/agentkeyguard-ca，不随卸载删除。
+        rm -rf /var/lib/agentkeyguard
+        if [ "$1" = "purge" ]; then
+            rm -rf /etc/agentkeyguard
+        fi
+        ;;
+    upgrade)
+        # 升级保留全部数据与 CA
+        ;;
+esac
+
+if command -v systemctl >/dev/null 2>&1; then
+    systemctl daemon-reload || true
+fi
+
+#DEBHELPER#
+
+exit 0

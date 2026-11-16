@@ -1,0 +1,42 @@
+#!/usr/bin/make -f
+export DH_VERBOSE = 1
+export PYTHON = python3
+
+PKG := agentkeyguard
+DEST := debian/$(PKG)
+VENV := $(DEST)/usr/lib/agentkeyguard/venv
+
+%:
+	dh $@
+
+override_dh_auto_clean:
+	rm -rf $(VENV)
+	dh_auto_clean
+
+override_dh_auto_configure:
+	:
+
+override_dh_auto_build:
+	:
+
+override_dh_auto_test:
+	# selftest 需要临时目录与交互环境，安装后由管理员手动运行
+	:
+
+override_dh_auto_install:
+	python3 -m venv $(VENV)
+	$(VENV)/bin/pip install --no-cache-dir --retries 5 --timeout 60 -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
+	# 入口脚本与服务文件要改名；dh_install 对不存在的目标会当成目录，这里手动装
+	install -d $(DEST)/usr/bin
+	install -m 0755 debian/agentkeyguard-launcher $(DEST)/usr/bin/agentkeyguard
+	install -d $(DEST)/lib/systemd/system
+	install -m 0644 debian/agentkeyguard.service.in $(DEST)/lib/systemd/system/agentkeyguard.service
+	# 代码与模板（不用 dh_install：Windows 挂载的 install 文件可能带可执行位）
+	install -d $(DEST)/usr/lib/agentkeyguard/agentkeyguard/templates
+	install -m 0644 src/agentkeyguard/*.py $(DEST)/usr/lib/agentkeyguard/agentkeyguard/
+	cp -a src/agentkeyguard/templates/. $(DEST)/usr/lib/agentkeyguard/agentkeyguard/templates/
+	# 随包配置
+	install -d $(DEST)/etc/agentkeyguard
+	install -m 0644 broker/rules.json $(DEST)/etc/agentkeyguard/rules.json
+	install -m 0644 broker/.env.example $(DEST)/etc/agentkeyguard/.env.example
+	install -m 0644 debian/agentkeyguard.env.example $(DEST)/etc/agentkeyguard/agentkeyguard.env.example

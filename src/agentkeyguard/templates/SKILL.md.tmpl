@@ -1,0 +1,67 @@
+# AgentKeyGuard 动态 Skill
+
+> Base：{{BASE}}
+> 固定读取地址：{{BASE}}/skill
+> 生成时间：{{DATE}}
+
+## 当前能力
+
+{{PROFILES}}
+
+## 服务
+
+{{SERVICES}}
+
+## Git 托管（Gitea / GitHub / Gitee）
+
+> Token 不在本文件中，**也不在 Agent 本机**。Git 操作一律调 `/git/exec`，Token 由 Broker 从
+> git 凭证里取出使用。不要在任何机器上存放 token 或 SSH 私钥文件——AI 能读的磁盘就等于明文。
+
+{{GIT}}
+
+## 规则摘要
+
+{{RULES}}
+
+## 接入方式
+
+密钥由主人在控制台「Agent 接入 → 添加密钥」时生成：他给你一条
+`https://<ip>:7700/skill?t=<票据>` 的**一次性链接**，你打开它就同时拿到本文件与一条
+`agent_token`。
+
+- 一条链接只能打开一次，打开即作废；换到的 token 长期有效，务必立刻保存。
+- 之后所有请求带 `Authorization: Bearer <token>`。
+- 被拒绝、已吊销的密钥一律 `403`，需要重新接入就向主人再要一条链接。
+- 本文件不含任何密钥；密钥只在一次性链接的响应里出现一次。
+
+## 调用约束
+
+- **`title` 必须写中文大白话**（≤30 字）。一句话说清这次要做什么，例如
+  「查看磁盘占用」「查最近 20 条订单」「拉取主分支最新代码」。
+  **不要**写 `ssh.exec`、`query`、`run`、`exec` 这类接口名或英文短语——
+  它原样显示在主人的审批卡片上，写不清楚主人只能点拒绝。
+- `POST {{BASE}}/pg/query`：查 PostgreSQL；`sql` 用 `%s` 占位符，不要拼接字符串。
+  可选 `database` 字段指定库名（不传就用凭证默认库）。查库前先调 `/pg/databases` 列一下，
+  别猜库名。
+- `POST {{BASE}}/mysql/query`：查 MySQL；`sql` 同样用 `%s` 占位符。可选 `database` 切库，
+  先调 `/mysql/databases` 列可用库。
+- `POST {{BASE}}/redis/cmd`：执行 Redis 命令（`cmd` 是一整条，如 `GET user:1`）。
+  读命令（GET / TTL / SCAN / INFO…）直接执行；写命令（SET / DEL…）要主人审批；
+  清库 / 改配置 / 执行脚本（FLUSHALL / CONFIG / EVAL / KEYS）一律被拒。
+  `SCAN` 必须带 `MATCH` 和 `COUNT`。
+- `POST {{BASE}}/ssh/exec`：单条非交互命令，可用 `&&` 连接；需要 root 用 `"sudo": true`，
+  不要把 `sudo` 写进命令。`vim`/`top`/`less`/`tmux` 这类会卡住的命令不要用。
+- `POST {{BASE}}/git/exec`：必填 `profile`、`url`、`action`
+  （clone / pull / fetch / log / status / diff / branch / checkout / commit / push），
+  可选 `args`（数组，逐个校验）、`branch`（push 用，默认 main）、`self_reflection`。
+  `url` 是完整仓库地址，必须与凭证登记的站点**同源**（scheme + host + port 一致），
+  跨站点会被 400 拒绝；仓库改名或换仓库不用改凭证。凭据由 Broker 注入，不要传 token。
+  强推、删远端分支、硬重置会先回 428，回答后带 `self_reflection` 重试。
+- 每次操作都要主人在手机上批准；HTTP 客户端 `timeout=350`，请求串行，不要并发。
+- 403 = 人工拒绝 / 超时 / 策略拦截，**不要重试**（响应里的 `explain` 会说明为什么被拒）；
+  428 = 高危操作，先回答「我是谁、我在哪儿、我要干什么」，把原文放进 `self_reflection` 再重试。
+- **423 = 服务锁定**：主人重启服务后还没登录解锁。这不代表密钥失效——
+  **不要重新申请密钥**，等几分钟重试即可。
+- 本 Skill 不含密码、私钥、TOTP、Git token；接口也不会返回这些。
+- 可带 `X-Agent-Id`（你的名字）与 `X-Task-Id`（同一任务的标识）。同一签名的多次请求
+  会在工作台折叠成一张卡，主人才好一次批完。

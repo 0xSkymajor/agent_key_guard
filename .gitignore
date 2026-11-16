@@ -1,0 +1,64 @@
+# ── 密钥，绝不提交 ──────────────────────────
+# .env 含 Bark Key，等于推送通道
+.env
+# 注：.env.example 是模板，文件名不同，不会被上面的 .env 规则匹配，正常提交
+
+# .env 的自动备份同样含 Bark Key，必须一起挡。
+# 为什么不用 `/.env.bak.*`（前导斜杠）：那只匹配仓库根目录，而 .env 实际在
+# broker/ 下 —— git check-ignore 实测过，`/.env.bak.*` 会**漏掉** broker/.env.bak.*。
+# 下面这种不带斜杠的写法匹配任意层级。`*.bak` / `*.bak-*` 也盖不住它，
+# 因为文件名是 .env.bak.<时间戳>，中间隔着 .env。
+.env.bak.*
+# cmd_change_master 备份的是整个保险箱（含全部凭据），同样是 .bak.<时间戳> 形态
+vault.enc.bak.*
+
+# ── Python ─────────────────────────────────
+venv/
+__pycache__/
+*.py[cod]
+
+# ── 日志与备份 ──────────────────────────────
+*.log
+*.bak
+*.bak-*
+
+# ── 个人基础设施文档与证书：含真实网络拓扑 / 安全勘察 / 自签 CA ──
+docs/RECON-*.md
+*-rootCA.pem
+*-rootCA.ce
+
+# ── 机器清单：含真实 IP / 用户名 / 主机密钥指纹 ──
+hosts.tsv
+# 注：hosts.tsv.example 是模板，文件名不同，正常提交
+
+# ── 保险箱与令牌（正常情况下不在仓库内，兜底）──
+vault.enc
+token
+audit.log
+
+# ── 系统 ───────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── 工具目录 ────────────────────────────────
+.workbuddy/
+.trae/
+
+# ── 临时调试草稿：一次性排查产物，不进仓库 ──
+# 只匹配仓库根目录的 _xxx.json / _xxx.py，不影响 src/ 里的 __init__.py 等
+/_*.json
+/_*.py
+
+# ── debian 构建产物（dpkg-buildpackage）────────────────
+debian/.debhelper/
+debian/agentkeyguard/
+debian/*.debhelper
+debian/files
+debian/debhelper-build-stamp
+debian/*.substvars
+*.deb
+*.buildinfo
+*.changes
+*.dsc
+*.tar.xz
+*.tar.gz

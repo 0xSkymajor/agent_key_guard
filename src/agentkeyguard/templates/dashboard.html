@@ -1,0 +1,2701 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#05081C">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/favicon.svg">
+<title>AgentKeyGuard 控制台</title><style>
+*{box-sizing:border-box}
+:root{
+  --ink-0:#03050F; --brand-300:#8FD0FF; --brand-200:#C4E7FF; --brand-600:#4D6BFE;
+  --text:#EBF2FF; --text-2:#A8B8D8; --text-3:#6C7C9F; --text-4:#6C7C9F;
+  --line:rgba(143,208,255,.13); --line-2:rgba(143,208,255,.28);
+  --ok:#3BE0A8; --warn:#FFC24B; --danger:#FF7A93;
+  --r-sm:8px; --r-md:10px; --r-lg:14px;
+  --mono:ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;
+}
+html,body{height:100%}
+body{margin:0;min-height:100vh;color:var(--text);font-size:13.5px;line-height:1.55;overflow-x:hidden;
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif;
+  -webkit-font-smoothing:antialiased;background:#03050F}
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(1100px 620px at 6% -6%,rgba(77,107,254,.16),transparent 60%),
+    radial-gradient(900px 600px at 102% 30%,rgba(108,77,254,.10),transparent 62%),
+    linear-gradient(158deg,#060A24,#03050F 72%)}
+
+.shell{max-width:1440px;margin:0 auto;padding:22px 26px 64px}
+
+/* 顶栏（在流内，不吸顶：保持与旧版滚动行为一致） */
+.top{display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:40;margin:-22px -26px 14px;padding:10px 26px;background:rgba(5,8,22,.92);border-bottom:1px solid var(--line);box-shadow:0 10px 26px rgba(2,4,15,.35)}
+.brand{display:flex;align-items:center;gap:11px;min-width:0;flex:0 0 auto}
+.brandmark{width:38px;height:38px;flex:0 0 38px;display:block}
+.brandmark svg{width:100%;height:100%;display:block;
+  filter:brightness(1.5) saturate(1.05) drop-shadow(0 4px 14px rgba(77,107,254,.5))}
+.brand h1{font-size:17px;margin:0;font-weight:700;letter-spacing:.01em;white-space:nowrap}
+.brand p{font-size:11px;color:var(--text-3);margin:1px 0 0}
+.who{display:flex;align-items:center;gap:8px;margin-left:auto;font-size:11.5px;color:var(--text-2);
+  border:1px solid var(--line);border-radius:999px;padding:6px 12px;background:rgba(143,208,255,.06);
+  white-space:nowrap}
+.who .dot{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(59,224,168,.16)}
+.ver{font-size:10.5px;color:var(--text-4)}
+.top .ghost{flex:0 0 auto}
+
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,190px));gap:16px;margin-bottom:16px}
+.stat{background:linear-gradient(180deg,rgba(14,20,52,.62),rgba(8,11,32,.55));
+  border:1px solid var(--line);border-radius:var(--r-lg);padding:13px 16px}
+.stat b{display:block;font-size:24px;font-weight:700;letter-spacing:.01em;font-variant-numeric:tabular-nums}
+.stat span{font-size:11px;color:var(--text-3)}
+
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin:0 0 18px;
+  overflow-x:auto;scrollbar-width:none;touch-action:pan-x}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;background:transparent;border:0;border-bottom:2px solid transparent;border-radius:0;display:inline-flex;align-items:center;gap:6px;
+  color:var(--text-3);padding:10px 14px;margin-bottom:-1px;font-size:13px;cursor:pointer;
+  font-family:inherit;white-space:nowrap;transition:color .15s}
+.tab:hover{color:var(--brand-200)}
+.tab.active{background:transparent;color:var(--text);border-bottom-color:var(--brand-300);font-weight:600}
+
+.panel{animation:fade .28s ease both}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.hide{display:none!important}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.list{display:grid;gap:16px}
+
+.card{background:linear-gradient(180deg,rgba(14,20,52,.62),rgba(8,11,32,.55));
+  border:1px solid var(--line);border-radius:var(--r-lg);padding:16px;overflow:hidden}
+.card h3{font-size:14px;margin:0;font-weight:600}
+.card p{margin:6px 0 0;font-size:12px;color:var(--text-2)}
+.card pre{background:rgba(255,255,255,.03);border:1px solid rgba(143,208,255,.09);border-radius:var(--r-sm);
+  padding:9px 11px;font-size:12px;white-space:pre-wrap;word-break:break-all;margin:10px 0 0;
+  font-family:var(--mono);color:#DCEAFF}
+.card-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card-top .badge{flex:none}
+
+.badge{font-family:var(--mono);font-size:10.5px;padding:1px 7px;border-radius:999px;
+  background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--text-2);white-space:nowrap}
+.badge.ok{background:rgba(59,224,168,.10);border-color:rgba(59,224,168,.30);color:var(--ok)}
+.badge.ng{background:rgba(255,122,147,.10);border-color:rgba(255,122,147,.30);color:var(--danger)}
+.badge.warn{background:rgba(255,194,75,.10);border-color:rgba(255,194,75,.30);color:var(--warn)}
+
+.danger{background:rgba(255,122,147,.08);border:1px solid rgba(255,122,147,.28);color:#FFD3DB;
+  border-radius:var(--r-sm);padding:9px 11px;font-size:12px;font-weight:600;margin-top:9px}
+.reflect{background:rgba(255,194,75,.06);border:1px solid rgba(255,194,75,.24);
+  border-left:2px solid rgba(255,194,75,.55);border-radius:var(--r-sm);padding:9px 11px;margin-top:9px}
+.reflect b{color:#FFD79A;font-size:11.5px}
+.reflect p{color:#FFE9C7;font-size:11.5px;white-space:pre-wrap;word-break:break-all;margin:4px 0 0;line-height:1.6}
+
+.meta{font-size:11.5px;color:var(--text-3);word-break:break-all}
+.meta code{font-family:var(--mono);font-size:11px;background:rgba(255,255,255,.04);
+  border:1px solid rgba(143,208,255,.10);padding:1px 5px;border-radius:5px;color:var(--brand-200)}
+
+button{font-family:inherit;cursor:pointer}
+button.ok,button.danger-btn{border:0;border-radius:9px;height:34px;padding:0 16px;font-size:12.5px;font-weight:600;flex:0 0 auto;width:auto}
+button.ok{background:linear-gradient(96deg,#7CF0C8,#3BE0A8);color:#04150F;box-shadow:0 6px 18px rgba(59,224,168,.16)}
+button.ok:hover{filter:brightness(1.05)}
+button.danger-btn{background:rgba(255,122,147,.10);border:1px solid rgba(255,122,147,.35);color:#FFD9E1}
+button.danger-btn:hover{background:rgba(255,122,147,.16)}
+.ghost{background:transparent;border:1px solid var(--line);color:var(--text-2);border-radius:8px;
+  height:28px;padding:0 11px;font-size:11.5px;flex:0 0 auto}
+.ghost:hover{color:var(--text);border-color:var(--line-2)}
+.danger-text{color:#FF9FB4;border-color:rgba(255,122,147,.30)}
+
+.form{background:linear-gradient(180deg,rgba(14,20,52,.62),rgba(8,11,32,.55));
+  border:1px solid var(--line);border-radius:var(--r-lg);padding:16px;margin-bottom:12px}
+.form label{display:block;font-size:11.5px;color:var(--text-2);margin:10px 0 5px;letter-spacing:.03em}
+label{display:block;font-size:11.5px;color:var(--text-2);margin:10px 0 5px}
+input,select,textarea{width:100%;padding:9px 11px;font-size:13px;border-radius:var(--r-sm);
+  border:1px solid var(--line);background:rgba(255,255,255,.035);color:var(--text);font-family:inherit;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--brand-300);box-shadow:0 0 0 3px rgba(77,107,254,.16)}
+input::placeholder,textarea::placeholder{color:var(--text-4)}
+textarea{min-height:74px;resize:vertical;font-family:var(--mono);font-size:12px}
+.form input[type=checkbox],.form input[type=radio]{width:auto;height:auto;accent-color:#3BE0A8}
+
+.item{padding:12px 0;border-bottom:1px solid rgba(143,208,255,.07)}
+.item:last-child{border-bottom:0}
+.item b{font-size:13px}
+.item .meta{margin-top:4px}
+.secrets{display:flex;gap:5px;flex-wrap:wrap}
+.secret{margin-top:10px;padding:10px;border-radius:var(--r-sm);background:rgba(59,224,168,.07);border:1px solid rgba(59,224,168,.25);font-family:var(--mono);font-size:12px;color:#D9FFEF;word-break:break-all}
+.chip{font-family:var(--mono);font-size:10.5px;background:rgba(255,255,255,.03);
+  border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--text-2)}
+.empty{text-align:center;color:var(--text-4);font-size:12.5px;padding:34px 0}
+.dl-btn{display:block;text-align:center;padding:10px;border-radius:var(--r-sm);border:1px solid var(--line);
+  color:var(--text-2);text-decoration:none;background:rgba(255,255,255,.03);margin-top:8px;font-size:12.5px}
+.dl-btn:hover{border-color:var(--line-2);color:var(--text)}
+
+.modal{position:fixed;inset:0;background:rgba(2,4,15,.62);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;padding:18px;z-index:60}
+.sheet{background:linear-gradient(180deg,rgba(18,25,64,.99),rgba(10,14,40,.99));
+  border:1px solid var(--line-2);border-radius:16px;padding:18px;width:100%;max-width:380px;
+  box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.sheet h3{margin:0 0 6px;font-size:15px}
+.sheet .meta{line-height:1.6}
+
+.toast{position:fixed;left:50%;bottom:46px;transform:translateX(-50%);
+  background:linear-gradient(96deg,#7CF0C8,#3BE0A8);color:#04150F;padding:9px 18px;border-radius:999px;
+  font-size:12px;font-weight:600;z-index:80;box-shadow:0 12px 30px rgba(0,0,0,.4)}
+.toast.ng{background:rgba(255,122,147,.92);color:#1A0410}
+
+.foot{text-align:center;font-size:11px;color:var(--text-4);margin-top:22px}
+
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 12px}
+.section-head h2{font-size:14px;margin:0;font-weight:600;color:var(--text)}
+.section-head .ghost{padding:5px 10px;font-size:11.5px}
+.section-divider{height:1px;background:var(--line);margin:22px 0}
+
+.subnav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.subtab{padding:7px 12px;border:1px solid var(--line);background:transparent;color:var(--text-3);
+  border-radius:var(--r-sm);font-size:12px;cursor:pointer;font-family:inherit}
+.subtab:hover{color:var(--brand-200)}
+.subtab.active{color:#061029;border-color:transparent;background:linear-gradient(96deg,#8FD0FF,#5B8DFF);font-weight:600}
+
+.settings-page{animation:fade .2s ease both}
+.settings-page .card{margin-bottom:16px}
+.settings-page details{margin-top:10px}
+.codebox{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);
+  border:1px solid rgba(143,208,255,.10);border-radius:var(--r-md);padding:10px 12px;margin-top:10px}
+.codebox code{flex:1;overflow:auto;white-space:nowrap;font-family:var(--mono);font-size:11.5px;color:var(--brand-200)}
+.codebox button{flex:none;padding:6px 10px;margin:0}
+
+/* 底部会话状态条 */
+.sessbar{position:fixed;left:0;right:0;bottom:0;height:28px;display:flex;align-items:center;
+  justify-content:center;gap:7px;font-size:11px;color:var(--text-3);
+  background:#040614;border-top:1px solid var(--line);z-index:50;
+  font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}
+.sessbar .dot{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(59,224,168,.14)}
+.sessbar.keep{color:#9FE9C9}
+.sessbar.warn{color:var(--warn)}
+.sessbar.warn .dot{background:var(--warn);box-shadow:0 0 8px rgba(255,194,75,.5)}
+
+.sess-row{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 0;border-bottom:1px solid rgba(143,208,255,.07)}
+.sess-row:last-child{border-bottom:0}
+.sess-row b{font-size:12.5px}
+.sess-row .ghost{flex:0 0 auto;padding:4px 9px;font-size:11px}
+.sess-row.off{opacity:.55}
+.sess-his{font-size:11px;color:var(--text-4);padding:4px 0;font-variant-numeric:tabular-nums}
+.sess-his.warn{color:var(--warn)}
+
+.his-fold{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+.his-fold>summary{cursor:pointer;font-size:11.5px;color:var(--text-3);list-style:none;user-select:none}
+.his-fold>summary::-webkit-details-marker{display:none}
+.his-fold>summary::before{content:'▸';display:inline-block;width:12px;color:var(--text-4);transition:transform .15s}
+.his-fold[open]>summary::before{transform:rotate(90deg)}
+.his-fold>summary:hover{color:var(--text-2)}
+
+.layer-flow{display:flex;gap:8px;align-items:center;margin:10px 0 0;font-size:11px;color:var(--text-4)}
+.layer-flow i{font-style:normal;color:var(--text-4);opacity:.6}
+.layer-group{border-top:1px solid var(--line);margin-top:14px;padding-top:12px}
+.layer-head{display:flex;gap:8px;align-items:center;margin-bottom:2px}
+.layer-head b{font-size:12.5px}
+
+#profileList{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+#profileList > .empty{grid-column:1 / -1}
+.cred{background:linear-gradient(180deg,rgba(14,20,52,.62),rgba(8,11,32,.55));border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
+.cred-head{display:flex;align-items:center;gap:9px;padding:12px 15px;border-bottom:1px solid rgba(143,208,255,.08)}
+.cred-head b{font-size:13.5px}
+.cred-acts{margin-left:auto;display:flex;gap:2px}
+.kind{font-family:var(--mono);font-size:10.5px;padding:1px 7px;border-radius:999px;color:var(--brand-300);background:rgba(143,208,255,.10);border:1px solid rgba(143,208,255,.28)}
+.cred-body{padding:11px 15px;display:flex;flex-direction:column;gap:7px}
+.kv{display:flex;align-items:baseline;gap:10px;font-size:12px}
+.kv .k{flex:0 0 62px;color:var(--text-3);font-size:11px}
+.kv .v{flex:1;min-width:0;color:#C9D8F1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono);font-size:11.5px}
+.iconbtn{width:26px;height:26px;border-radius:7px;border:0;background:transparent;color:var(--text-3);cursor:pointer;display:grid;place-items:center}
+.iconbtn:hover{color:var(--brand-200);background:rgba(143,208,255,.08)}
+.iconbtn-danger:hover{color:var(--danger);background:rgba(255,122,147,.10)}
+.svc-acts{margin-left:auto;display:flex;gap:6px}
+.keychips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.keychip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;
+  font-family:var(--mono);font-size:10.5px;color:var(--text-2);
+  background:rgba(143,208,255,.06);border:1px solid rgba(143,208,255,.18)}
+.keychip a{color:var(--text-4);text-decoration:none;cursor:pointer}
+.keychip a:hover{color:var(--danger)}
+@media (max-width:900px){
+  .shell{padding:16px 16px 60px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #profileList{grid-template-columns:minmax(0,1fr)}
+  .brand h1{font-size:15px}
+  .brand p{display:none}
+  /* 顶栏渐隐只在真正溢出时由 .tabs.is-over 提供 */
+  .who{display:none}
+}
+@media (max-width:600px){
+  .shell{padding:12px 12px 56px}
+  .stat b{font-size:20px}
+  .sessbar{font-size:10px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+
+/* ===== 1.4 workbench layout ===== */
+.pagehead{display:flex;align-items:flex-end;gap:16px;margin:0 0 16px}
+.pagehead h1{margin:0;font-size:21px;font-weight:700;letter-spacing:-.01em}
+.pagehead .sub{font-size:11.5px;color:var(--text-3);margin-top:2px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.stack > .card + .card{margin-top:0}
+.strategy{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid rgba(143,208,255,.06)}
+.strategy .metric{flex-direction:column;align-items:flex-start;gap:2px;padding:12px 16px}
+.strategy .metric + .metric{border-top:0;border-left:1px solid rgba(143,208,255,.06)}
+.strategy .metric b{font-size:20px}
+details.hist > summary{cursor:pointer;user-select:none}
+details.hist > summary::marker{color:var(--text-3)}
+details.hist:not([open]) .card-head{border-bottom:0}
+.card + .card{margin-top:16px}
+.card-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(143,208,255,.09)}
+.card-head .t{font-size:13px;font-weight:600}
+.card-head .n{font-size:11px;color:var(--text-3)}
+.card-head .r{margin-left:auto;display:flex;gap:8px}
+.card-body{padding:14px 16px}
+.card-body > .card{margin-top:0;margin-bottom:12px;padding:14px;box-shadow:none;background:rgba(255,255,255,.02);border-color:rgba(143,208,255,.10)}
+.card-body > .card:last-child{margin-bottom:0}
+.metric{display:flex;align-items:center;gap:8px;padding:10px 16px}
+.metric + .metric{border-top:1px solid rgba(143,208,255,.06)}
+.metric b{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.metric span{font-size:11.5px;color:var(--text-3)}
+.mini{display:flex;align-items:center;gap:9px;padding:9px 16px;font-size:12px;color:#C9D8F1;border-bottom:1px solid rgba(143,208,255,.06)}
+.mini:last-child{border-bottom:0}
+.mini .g{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mini .t{font-family:var(--mono);font-size:10.5px;color:var(--text-4)}
+@media (max-width:900px){
+  .top{margin:-16px -16px 12px;padding:10px 16px}
+  .pagehead{flex-wrap:wrap}
+}
+
+
+.types{display:flex;gap:8px;margin:4px 0 18px;flex-wrap:wrap}
+.types span{padding:5px 12px;border-radius:8px;font-size:12px;color:var(--text-3);cursor:pointer;
+  border:1px solid var(--line);background:rgba(255,255,255,.02)}
+.types span.on{color:#061029;background:linear-gradient(96deg,#8FD0FF,#5B8DFF);border-color:transparent;font-weight:600}
+.rv-cells{display:flex;gap:8px;margin:4px 0 0}
+.rv-cells input{flex:1 1 0;min-width:0;height:46px;text-align:center;font-family:var(--mono);font-size:18px;
+  font-weight:600;border-radius:9px;background:rgba(255,255,255,.035);border:1px solid var(--line);color:var(--text)}
+.rv-cells input:focus{outline:none;border-color:var(--brand-300);box-shadow:0 0 0 3px rgba(77,107,254,.18)}
+.promo{position:fixed;left:0;right:0;bottom:28px;z-index:45;pointer-events:none;
+  max-width:1440px;margin:0 auto;padding:30px 26px 16px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.promo::before{content:"";position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(to top,rgba(4,6,20,.97) 0%,rgba(4,6,20,.88) 42%,rgba(4,6,20,.55) 72%,rgba(4,6,20,0) 100%)}
+.promo .in{display:contents}
+.promo b{display:block;font-size:12px;color:var(--text-2);margin-bottom:3px;font-weight:600}
+.promo span{font-size:11.5px;color:var(--text-4);line-height:1.6}
+.promo > .in > div{padding-left:12px;border-left:2px solid rgba(143,208,255,.18)}
+#serviceList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+#serviceList > .empty{grid-column:1 / -1;text-align:center;padding:44px 0}
+#tab-profiles{padding-bottom:120px}
+@media (max-width:1180px){
+  #profileList{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:900px){
+  #profileList,#serviceList{grid-template-columns:minmax(0,1fr)}
+  .promo{display:none}
+}
+
+.settings-layout{display:grid;grid-template-columns:208px minmax(0,1fr);gap:18px;align-items:start}
+.settings-layout .subnav{flex-direction:column;gap:2px;margin:0;position:sticky;top:84px;flex-wrap:nowrap;overflow:visible}
+.settings-layout .subtab{text-align:left;border:0;background:transparent;border-radius:9px;padding:9px 12px;font-size:13px;color:var(--text-3)}
+.settings-layout .subtab:hover{color:var(--brand-200);background:rgba(143,208,255,.05)}
+.settings-layout .subtab.active{color:var(--text);background:rgba(143,208,255,.10);border-color:transparent;font-weight:600}
+@media (max-width:900px){
+  .settings-layout{grid-template-columns:minmax(0,1fr)}
+  .settings-layout .subnav{flex-direction:row;flex-wrap:nowrap;position:static;overflow-x:auto;
+    gap:6px;padding-bottom:2px;scrollbar-width:none;touch-action:pan-x}
+  .settings-layout .subnav::-webkit-scrollbar{display:none}
+  .settings-layout .subtab{text-align:center;white-space:nowrap;flex:0 0 auto}
+  /* 二级导航渐隐同样只在溢出时出现 */
+}
+
+/* 底部状态条：左状态 / 右身份 */
+.sessbar{justify-content:flex-start;padding:0 26px}
+.sessbar .in{max-width:none;margin:0;width:100%;display:flex;align-items:center;gap:10px}
+.sessbar .right{margin-left:auto;display:flex;gap:16px;font-family:var(--mono);font-size:10.5px;color:var(--text-4)}
+/* 全局待审批提醒：右下浮动胶囊 + tab 角标 */
+.appr-float{position:fixed;right:24px;bottom:46px;z-index:56;display:flex;align-items:center;gap:8px;
+  height:40px;padding:0 16px;border-radius:999px;border:1px solid rgba(255,194,75,.45);
+  background:rgba(255,194,75,.12);color:#FFE9C7;font-size:12.5px;font-weight:600;cursor:pointer;
+  box-shadow:0 12px 30px rgba(0,0,0,.45);
+  animation:apprPulse 2.4s ease-in-out infinite}
+.appr-float.hide{display:none}
+.appr-float .dot{width:7px;height:7px;border-radius:50%;background:var(--warn);box-shadow:0 0 0 4px rgba(255,194,75,.18)}
+.appr-float b{font-variant-numeric:tabular-nums}
+@keyframes apprPulse{0%,100%{box-shadow:0 12px 30px rgba(0,0,0,.45),0 0 0 0 rgba(255,194,75,.35)}
+  50%{box-shadow:0 12px 30px rgba(0,0,0,.45),0 0 0 10px rgba(255,194,75,0)}}
+.tab[data-tab="pending"].has-new::after{content:attr(data-count);margin-left:0;display:inline-flex;
+  align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:999px;
+  background:var(--warn);color:#1A1404;font-family:var(--mono);font-size:10px;font-weight:700}
+@media (max-width:600px){.sessbar .right span:last-child{display:none}.appr-float{right:14px;bottom:42px}}
+
+.top .tabs{flex:1;min-width:0;margin:0 0 0 22px;border-bottom:0;height:auto;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;touch-action:pan-x;-webkit-overflow-scrolling:touch;-webkit-mask-image:linear-gradient(90deg,#000 92%,transparent 100%);mask-image:linear-gradient(90deg,#000 92%,transparent 100%)}
+.top .tabs::-webkit-scrollbar{display:none}
+.top .tab{padding:8px 12px;margin-bottom:0;border-bottom-width:2px}
+.top .who{margin-left:0}
+@media (max-width:900px){.top .tabs{margin-left:10px}.top .tab{padding:8px 8px}}
+
+.cmd-wrap{position:relative}
+.cmd-wrap pre{margin:0;white-space:pre-wrap;word-break:break-all;padding-right:56px}
+.cmd-wrap .ghost{position:absolute;top:8px;right:8px;height:22px;padding:2px 9px;font-size:10.5px}
+.drawer-body .cmd-wrap pre{padding:12px 56px 12px 12px}
+
+/* 审批详情抽屉：与手机审批页同一套语言 */
+.drawer-mask{position:fixed;inset:0;z-index:58;background:rgba(2,4,15,.5);
+  backdrop-filter:blur(3px);display:flex;justify-content:flex-end;
+  opacity:0;pointer-events:none;transition:opacity .2s}
+.drawer-mask.on{opacity:1;pointer-events:auto}
+.drawer{width:min(520px,100vw);height:100%;background:linear-gradient(180deg,#080C24,#05081C);
+  border-left:1px solid var(--line-2);display:flex;flex-direction:column;
+  transform:translateX(24px);transition:transform .22s}
+.drawer-mask.on .drawer{transform:none}
+.drawer-head{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.drawer-sub{font-size:11.5px;color:var(--text-3)}
+.drawer-body{flex:1;overflow:auto;padding:18px}
+.drawer-body h2{font-size:18px;font-weight:700;margin:8px 0 4px;letter-spacing:-.01em}
+.drawer-body .meta{margin:0 0 14px}
+.drawer-body .drow{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid rgba(143,208,255,.07);font-size:12px}
+.drawer-body .drow .k{flex:0 0 56px;color:var(--text-3);font-size:11px}
+.drawer-body .drow .v{flex:1;min-width:0;color:#DCEAFF;word-break:break-all}
+.drawer-foot{padding:12px 18px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);
+  display:flex;gap:10px;background:#040614}
+.drawer-foot button{flex:1}
+@media (max-width:600px){.drawer{width:100vw;border-left:0}.drawer-body{padding:14px}}
+
+/* ===== rc5 版式收敛：设置页 ===== */
+.settings-layout{grid-template-columns:208px minmax(0,920px);justify-content:center}
+.settings-page .card{padding:16px}
+.settings-page .card > h3{margin:-16px -16px 12px;padding:12px 16px;
+  border-bottom:1px solid rgba(143,208,255,.09);font-size:13.5px;font-weight:600}
+.settings-page .card > h3 + p{margin-top:0}
+.settings-page input,.settings-page select,.settings-page textarea{max-width:620px}
+.settings-page .row input,.settings-page .row select{max-width:none}
+.settings-page .card > button.ok,.settings-page .card > button.danger-btn{width:auto;min-width:150px;height:38px}
+.settings-page .empty{padding:16px 0}
+.settings-page details{margin-top:12px}
+#tab-settings{padding-bottom:48px}
+main{scroll-margin-top:80px}
+/* 卡片圆角统一：外层 14 / 内嵌盒 10 / 输入 8 */
+.card{border-radius:14px}
+.card-body > .card,.secret,.codebox,.reflect,.danger,.promo{border-radius:10px}
+input,select,textarea{border-radius:8px}
+@media (max-width:900px){
+  .settings-page input,.settings-page select,.settings-page textarea{max-width:none}
+  .settings-page .card > button.ok,.settings-page .card > button.danger-btn{width:auto}
+}
+
+
+@media (max-height:740px){.promo{display:none}#tab-profiles{padding-bottom:40px}}
+
+/* rc6 narrow settings fix：rc5 的内容列上限不能盖掉窄屏单列 */
+@media (max-width:900px){
+  .settings-layout{grid-template-columns:minmax(0,1fr)}
+  .settings-page{max-width:none}
+}
+
+/* ===== rc7 细节：分隔线 / 折叠箭头 / 按钮规范 ===== */
+.layer-group{border-top:1px solid rgba(143,208,255,.07);margin-top:18px;padding-top:14px}
+.section-divider{background:rgba(143,208,255,.08);margin:24px 0}
+details{border-top:1px solid rgba(143,208,255,.06);margin-top:18px;padding:14px 0 2px}
+details>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:7px;
+  font-size:12px;line-height:1.4;color:var(--text-3);user-select:none;padding:2px 0}
+details>summary::-webkit-details-marker{display:none}
+details>summary::before{content:'';width:5px;height:5px;border-right:1.4px solid currentColor;
+  border-bottom:1.4px solid currentColor;transform:rotate(-45deg);opacity:.6;flex:0 0 auto;
+  transition:transform .15s,opacity .15s}
+details[open]>summary::before{transform:rotate(45deg);opacity:.9}
+.his-fold>summary::before{content:'';width:5px;height:5px;border-right:1.4px solid currentColor;
+  border-bottom:1.4px solid currentColor;transform:rotate(-45deg);display:inline-block}
+.his-fold[open]>summary::before{transform:rotate(45deg)}
+.his-fold{border-top:1px solid rgba(143,208,255,.06)}
+/* 设置页按钮：不再通栏 */
+.settings-page .card > button.ok,.settings-page .card > button.danger-btn{height:36px;padding:0 18px}
+.settings-page > button.ok{display:block;width:auto;min-width:170px;height:38px;margin:18px 0 0 auto}
+.settings-page .card button.ghost{height:28px;padding:0 11px}
+@media (max-width:600px){
+  .card .row button.ok,.card .row button.danger-btn{flex:1}
+  .settings-page > button.ok{width:100%;margin-top:16px}
+}
+@media (max-height:740px){.promo{display:none}#tab-profiles{padding-bottom:40px}}
+
+/* ===== rc11 背景氛围：超大模糊 Logo + 呼吸光 ===== */
+.bg{overflow:hidden;background:#03050F}
+/* 底层：放大的 Logo，先做高斯模糊 */
+.bg-logo{position:absolute;left:-18vw;bottom:-30vh;width:min(1250px,108vw);opacity:.55;
+  filter:blur(96px) saturate(1.2);transform:translate3d(0,0,0);
+  animation:bgFloat 30s ease-in-out infinite alternate;will-change:transform}
+.bg-logo svg{width:100%;height:auto;display:block}
+@keyframes bgFloat{
+  from{transform:translate3d(0,0,0) scale(1)}
+  to{transform:translate3d(3vw,-3vh,0) scale(1.06)}
+}
+/* 上层：深色背景板，半透明，只让 Logo 的光透一点点 */
+.bg-veil{position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(1100px 620px at 6% -6%,rgba(77,107,254,.10),transparent 60%),
+    radial-gradient(900px 600px at 102% 30%,rgba(108,77,254,.08),transparent 62%),
+    linear-gradient(158deg,rgba(6,10,36,.93),rgba(3,5,15,.965));
+  animation:bgGlow 22s ease-in-out infinite alternate}
+@keyframes bgGlow{from{opacity:.9}to{opacity:1}}
+@media (max-width:900px){.bg-logo{width:135vw;left:-34vw;bottom:-22vh;opacity:.45;filter:blur(72px)}}
+@media (prefers-reduced-motion:reduce){.bg-logo,.bg-glow{animation:none}}
+
+a.ghost{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;line-height:1}
+/* 背景：不用 Logo，底部放品牌色光斑，透出一点亮色 */
+.bg-logo{display:none}
+.bg-veil{background:
+  radial-gradient(620px 340px at 14% 110%,rgba(77,107,254,.30),transparent 62%),
+  radial-gradient(520px 300px at 82% 108%,rgba(143,208,255,.18),transparent 64%),
+  radial-gradient(760px 420px at 48% 126%,rgba(108,77,254,.16),transparent 66%),
+  linear-gradient(158deg,rgba(6,10,36,.90),rgba(3,5,15,.955))}
+
+/* ===== rc18 卡片头 / 行长收口 ===== */
+.settings-page .card > .card-hd{margin:-16px -16px 12px;padding:12px 16px;
+  border-bottom:1px solid rgba(143,208,255,.09)}
+.settings-page .card > p{max-width:780px}
+.drawer-body .drow[style*="border-bottom:0"]{padding-bottom:0}
+
+/* ===== rc16 视觉收口 ===== */
+/* 间距只有两个来源：顶层 16 / 卡内嵌套 12；列表容器自己 gap，不再叠加 margin */
+.list > .card + .card,#serviceList > .card + .card,#profileList > .card + .card{margin-top:0}
+.list > details.item{margin-top:0;border-top:0}
+/* 断行：正文按词断，代码块才允许任意断 */
+.meta{word-break:normal;overflow-wrap:anywhere}
+.meta code,.nowrap{white-space:nowrap}
+.card pre,.cmd-wrap pre,.reflect p,.drawer-body .drow .v{word-break:normal;overflow-wrap:anywhere}
+.acts-r{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+.form > button.ok{width:auto;min-width:200px}
+#tab-pending,#tab-services,#tab-skill,#tab-settings{padding-bottom:96px}
+/* 浮层不透明，滚动时不再透出下面的字 */
+.appr-float{background:#2A2210}
+/* 圆角收成 6 / 8 / 10 / 14 / 999 */
+.iconbtn{border-radius:8px}
+button.ok,button.danger-btn{border-radius:8px}
+.meta code,.chip{border-radius:6px}
+.rv-cells input{border-radius:8px}
+.settings-layout .subtab{border-radius:8px}
+.sheet{border-radius:14px}
+/* 选中态不再比主操作抢眼 */
+.types span.on{color:var(--brand-300);background:rgba(143,208,255,.10);
+  border-color:rgba(143,208,255,.45);font-weight:600}
+/* 顶栏退出按钮的短标签 */
+.top > .ghost .sm{display:none}
+/* 渐隐只在 tab 真的放不下时出现 */
+.tabs.is-over{-webkit-mask-image:linear-gradient(90deg,#000 84%,transparent 100%);
+  mask-image:linear-gradient(90deg,#000 84%,transparent 100%)}
+.settings-layout .subnav.is-over{-webkit-mask-image:linear-gradient(90deg,#000 86%,transparent 100%);
+  mask-image:linear-gradient(90deg,#000 86%,transparent 100%)}
+/* 决策按钮不拆字 */
+button.ok,button.danger-btn{white-space:nowrap}
+.row-acts{flex-wrap:wrap}
+
+@media (max-width:600px){
+  /* 顶栏：品牌只留图形，5 个 tab 才能在 390-430 里放下 */
+  .top{margin:-12px -12px 10px;padding:9px 12px;gap:8px}
+  .brand > div{display:none}
+  .top .tabs{margin-left:6px}
+  .top .tab{font-size:12.5px;padding:8px 6px}
+  /* 窄屏用右下胶囊提示待审批，tab 角标会让 5 个 tab 放不下 */
+  .tab[data-tab="pending"].has-new::after{display:none}
+  /* 浮层缩小并抬离底栏 */
+  .appr-float{height:34px;padding:0 12px;font-size:11.5px;right:12px;bottom:38px}
+  /* 触控目标 */
+  .iconbtn{width:38px;height:38px}
+  .card .ghost,.section-head .ghost,.drawer-head .ghost{height:34px}
+  .cmd-wrap .ghost{height:22px}
+  /* 页头两行网格，badge 不再孤立换行 */
+  .pagehead{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;row-gap:8px}
+  .pagehead > .badge{grid-column:2;justify-self:end}
+  /* 主按钮只在窄屏通栏 */
+  .form > button.ok{width:100%;min-width:0}
+  /* 操作行：操作按钮保持在右侧一行，不再被 flex:1 压到换字 */
+  .row-acts .acts-r{flex:1 1 auto;justify-content:flex-end}
+  .card .row-acts button.ok,.card .row-acts button.danger-btn{flex:0 0 auto}
+}
+@media (max-width:420px){
+  .top > .ghost{padding:0 8px}
+  .top > .ghost .lg{display:none}
+  .top > .ghost .sm{display:inline}
+}
+
+/* ===== rc19 列表去双层卡 / 字号 / 表单两列 ===== */
+/* 待审批列表：内层不再是一张卡，只留左侧强调线 */
+.card-body > .card{margin:0 0 12px;padding:0 0 0 14px;background:none;border:0;box-shadow:none;
+  border-left:2px solid rgba(143,208,255,.16);border-radius:0}
+.card-body > .card:last-child{margin-bottom:0}
+/* 凭证表单：宽屏两列，窄屏回单列 */
+.f2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:14px}
+.f2 > div{min-width:0}
+/* 字号：辅助信息抬到 11-12.5 一档 */
+.meta{font-size:12px}
+.badge{font-size:11px}
+.kind{font-size:11px}
+.keychip{font-size:11px}
+.mini .t{font-size:11px}
+.ver{font-size:11px}
+.ghost{font-size:12px}
+button.ok,button.danger-btn{font-size:13px}
+.card-head .n{font-size:11.5px}
+.metric span{font-size:12px}
+.pagehead .sub{font-size:12px}
+.promo span{font-size:12px}
+.drawer-sub{font-size:12px}
+@media (max-width:600px){.f2{grid-template-columns:minmax(0,1fr)}}
+
+/* ===== rc20 表单限宽 / 页头与二级导航统一 ===== */
+.form{max-width:920px}
+@media (max-width:700px){
+  .strategy{grid-template-columns:1fr}
+  .strategy .metric + .metric{border-left:0;border-top:1px solid rgba(143,208,255,.06)}
+}
+/* ≤900：设置页二级导航横排 */
+@media (max-width:900px){
+  .settings-layout .subnav{background:rgba(255,255,255,.03);border:1px solid var(--line);
+    border-radius:9px;padding:3px;gap:2px}
+  .settings-layout .subtab{flex:1 1 auto;text-align:center;border:0;border-radius:7px;
+    padding:6px 8px;font-size:12px;background:transparent;color:var(--text-3)}
+  .settings-layout .subtab.active{background:rgba(143,208,255,.10);color:var(--text)}
+}
+
+/* ===== 页头动作 / 引导段 / 会话条贴边 ===== */
+.pagehead .ph-act{margin-left:auto;align-self:flex-start;margin-top:4px}
+@media (max-width:600px){
+  .sessbar{padding:0 12px}
+  .pagehead .ph-act{align-self:center;margin-top:0}
+}
+
+/* ===== 硬件构想页的说明列表 ===== */
+.concept{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:8px}
+.concept li{position:relative;padding-left:14px;font-size:12px;line-height:1.65;color:var(--text-2)}
+.concept li::before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;border-radius:50%;background:rgba(143,208,255,.45)}
+.concept b{display:inline-block;min-width:34px;margin-right:8px;color:var(--text);font-weight:600}
+</style></head><body>
+<div class="bg" aria-hidden="true"><div class="bg-veil"></div></div>
+<div class="shell">
+  <header class="top">
+    <div class="brand">
+      <span class="brandmark" aria-hidden="true"><svg class="mk" width="422" height="422" viewBox="0 0 422 422" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M157.768 82.0987L34.9327 109.395C34.9232 109.398 34.9164 109.406 34.9164 109.416C34.9164 109.426 34.9095 109.434 34.8999 109.436C27.9462 110.982 23 117.137 23 124.261V276.161C22.9969 291.196 26.7078 305.999 33.8028 319.254C40.8977 332.51 51.1572 343.808 63.6695 352.144L154.389 412.645C157.749 414.885 162.126 414.885 165.486 412.645L256.205 352.144C281.611 335.207 296.875 306.721 296.875 276.194V124.228C296.875 117.098 291.921 110.939 284.958 109.399L162.107 82.0987C160.678 81.7812 159.197 81.7812 157.768 82.0987Z" fill="url(#paint0_linear_1913_2)"/>
+<path d="M144.623 198.459C139.178 199.185 138.851 198.698 133.996 198.652C130.458 230.994 128.236 289.601 136.005 289.673C145.717 289.764 186.649 274.605 193.501 268.841C198.983 264.23 202.895 268.281 204.165 270.883C239.61 323.658 287.944 346.449 351.2 334.408C399.847 325.149 397.311 312.374 398.076 306.679C400.163 291.159 350.608 293.612 337.31 261.438C321.37 222.871 289.886 208.875 276.634 206.485C326.506 170.043 297.778 126.071 310.574 107.736C321.895 91.5159 343.882 76.9671 338.163 65.2592C336.64 62.1407 311.116 49.4684 253.53 80.0117C188.265 114.627 186.553 180.396 181.607 190.062C178.479 196.175 151.43 197.551 144.623 198.459Z" fill="url(#paint1_linear_1913_2)"/>
+<path d="M202.942 13.922C203.203 13.424 203.474 12.9034 203.734 12.3602C203.777 12.2909 203.814 12.2191 203.848 12.1452V12.0547L193.889 6C193.832 6.11317 193.775 6.20371 193.73 6.30556C193.47 6.84878 193.198 7.36937 192.927 7.86732C192.825 8.05972 192.723 8.22947 192.621 8.41055C192.406 8.80664 192.18 9.19143 191.965 9.54226L191.614 10.1081L191.195 10.7419L190.776 11.3417L190.346 11.9302L189.905 12.4847L189.543 12.9261L189.067 13.4693L188.694 13.8654L188.219 14.3294C188.094 14.4652 187.958 14.5897 187.823 14.7142L187.336 15.1329C187.2 15.2461 187.064 15.3706 186.929 15.4724L186.532 15.7667C186.306 15.9364 186.08 16.1062 185.853 16.2533L185.469 16.5023C185.231 16.6494 184.993 16.7965 184.756 16.921L184.405 17.1134C184.02 17.3171 183.643 17.4982 183.273 17.6566H183.115C182.779 17.801 182.435 17.9257 182.085 18.0301L181.7 18.1546L180.817 18.3922L180.455 18.4828C180.036 18.5733 179.629 18.6525 179.21 18.7204C175.544 19.2976 171.515 18.9694 167.022 18.7204C162.065 18.3123 157.077 18.4527 152.151 19.1392C150.397 19.4238 148.659 19.8015 146.945 20.2709C146.413 20.418 145.893 20.5878 145.372 20.7688L144.863 20.9499C144.523 21.0857 144.172 21.2102 143.833 21.3573L143.256 21.6063C142.95 21.7421 142.633 21.8779 142.339 22.025L141.739 22.3193C141.592 22.3985 141.445 22.4551 141.309 22.5343L140.902 22.7606L140.211 23.1454L139.419 23.6208L138.763 24.0282L137.993 24.5374L137.348 24.9788L136.59 25.5333L135.968 25.9973L135.764 26.1445L135.356 26.4727L134.474 27.197L133.874 27.7062L133.025 28.4418L132.448 28.9624L131.599 29.7546L131.056 30.2639L130.185 31.124L129.834 31.4861L129.732 31.588C129.211 32.1086 128.702 32.6405 128.204 33.1724L127.853 33.5459C127.446 33.9759 127.05 34.406 126.654 34.8473C126.518 34.9831 126.393 35.1303 126.257 35.2774L124.843 36.8618L124.696 37.0315L123.338 38.5707L122.002 40.0645C121.878 40.223 121.742 40.3701 121.617 40.5172L120.327 42.0111C120.216 42.1226 120.11 42.2397 120.01 42.3619L118.969 43.4936L118.618 43.8784L117.34 45.2138L116.412 46.1305L116.197 46.3342L115.484 46.9906L115.155 47.2848L114.567 47.7941L114.205 48.077L113.729 48.4505C113.458 48.6542 113.198 48.8466 112.926 49.0277L112.586 49.2653C112.213 49.503 111.851 49.7293 111.455 49.9217L110.606 50.3291L110.368 50.4197C110.153 50.5102 109.927 50.5781 109.712 50.646L109.463 50.7252C109.18 50.8055 108.893 50.8697 108.603 50.9176C108.365 50.9176 108.116 50.9176 107.878 50.9742H106.871L106.43 50.9176L106.124 50.8384L105.717 50.7366C105.359 50.6323 105.008 50.5076 104.664 50.3631L104.483 50.1368C104.131 49.9853 103.788 49.8153 103.453 49.6275L102.797 49.254L112.813 55.3426L113.413 55.7048C113.75 55.8927 114.098 56.0627 114.454 56.214L114.669 56.3046C115.012 56.4527 115.363 56.5812 115.721 56.6894L116.117 56.7799L116.423 56.8591L116.853 56.9157H117.871C118.12 56.9157 118.358 56.9157 118.596 56.8591C118.886 56.8124 119.173 56.7482 119.456 56.6667L119.716 56.5875C119.931 56.5196 120.146 56.4517 120.361 56.3612L120.599 56.2706C120.871 56.1461 121.153 56.0217 121.425 55.8745C121.815 55.6734 122.192 55.4505 122.557 55.2068L122.885 54.9805C123.157 54.7994 123.428 54.607 123.7 54.4033L123.881 54.2675L124.175 54.0298L124.526 53.7469L125.126 53.2263L125.443 52.9434L126.167 52.2757L126.371 52.0833C126.665 51.8004 126.97 51.5061 127.265 51.2006C127.695 50.7705 128.113 50.3178 128.544 49.8651C128.668 49.7407 128.793 49.6049 128.906 49.469L129.936 48.3373L130.264 47.9752L131.644 46.6171L132.074 46.1305C132.471 45.6778 132.867 45.2138 133.274 44.7611L134.7 43.1428L134.802 43.0183L136.217 41.4339L136.613 40.9925L137.812 39.7024C137.925 39.5779 138.05 39.4534 138.163 39.3176L139.691 37.7332L140.155 37.2805L141.026 36.4204L141.57 35.9111C141.841 35.6395 142.124 35.3792 142.407 35.1189L142.984 34.5984L143.833 33.8514L144.433 33.3535L145.327 32.6292L145.938 32.1539C146.142 31.9954 146.345 31.837 146.56 31.6899L147.319 31.1353L147.952 30.6939L148.733 30.1847C148.948 30.0489 149.163 29.9017 149.39 29.7773C149.616 29.6528 149.91 29.4491 150.182 29.3019L150.861 28.9172L151.698 28.4758L152.298 28.1815L153.215 27.7628L153.803 27.5025L154.833 27.1064L155.331 26.9253C155.852 26.7443 156.372 26.5745 156.904 26.4274C158.618 25.9592 160.356 25.5815 162.11 25.2957C167.04 24.6092 172.031 24.4688 176.992 24.8769C181.519 25.1259 185.503 25.4541 189.169 24.8769C189.588 24.809 190.007 24.7298 190.414 24.6393L190.776 24.5488L191.67 24.3111L192.044 24.1866C192.395 24.0734 192.734 23.9489 193.074 23.8131L193.232 23.7566C193.619 23.5956 193.997 23.4143 194.364 23.2133H194.466L194.715 23.0662L195.428 22.6475L195.824 22.3985C196.05 22.2514 196.277 22.0816 196.503 21.9119L196.741 21.7421L196.899 21.6176L197.306 21.2781L197.782 20.8594L198.189 20.4746L198.461 20.2256L198.664 19.9993L199.027 19.6145L199.502 19.0713L199.864 18.6299L200.056 18.4149L200.305 18.064C200.452 17.883 200.6 17.6906 200.735 17.4869L201.154 16.8871C201.301 16.6834 201.437 16.4683 201.573 16.2533L201.743 15.993C201.811 15.8912 201.867 15.778 201.924 15.6875C202.15 15.314 202.365 14.9405 202.591 14.5557L202.942 13.922ZM180.693 50.2386L170.688 44.1387V47.5112C170.688 48.0544 170.688 48.6429 170.621 49.1295L170.553 50.0802C170.553 50.5442 170.485 51.0195 170.44 51.4835C170.394 51.9475 170.36 52.1286 170.326 52.4454C170.292 52.7623 170.213 53.3282 170.157 53.7469C170.1 54.1656 170.055 54.3807 170.009 54.6976C169.964 55.0144 169.862 55.5237 169.794 55.9198C169.727 56.3159 169.67 56.5422 169.602 56.8365C169.534 57.1307 169.432 57.6287 169.342 57.9682C169.251 58.3077 169.195 58.568 169.115 58.8623C169.036 59.1565 168.912 59.6092 168.81 59.994C168.708 60.3787 168.64 60.5598 168.561 60.8314C168.482 61.103 168.38 61.386 168.278 61.6576C168.108 62.1782 167.916 62.6874 167.723 63.1854C167.633 63.423 167.542 63.672 167.44 63.9097C167.225 64.4529 166.988 65.0414 166.739 65.5167C166.671 65.6638 166.603 65.8336 166.524 65.992L165.969 67.0672C165.856 67.2822 165.754 67.4972 165.63 67.7122C165.403 68.1197 165.177 68.5044 164.939 68.9005L164.668 69.3532C164.43 69.7267 164.192 70.0888 163.943 70.4849L163.649 70.9263C163.31 71.4129 162.948 71.8996 162.518 72.3636C162.144 72.8389 161.771 73.2916 161.386 73.7216L160.978 74.1743C160.707 74.4686 160.435 74.7628 160.152 75.0457L159.779 75.4192L158.647 76.483L158.172 76.9017C157.772 77.2412 157.376 77.5694 156.983 77.8863L156.587 78.1919C156.395 78.349 156.195 78.4963 155.988 78.6332L155.275 79.1538L154.652 79.5726C154.403 79.7423 154.165 79.9008 153.917 80.0479L153.283 80.444L152.547 80.8854L151.891 81.2475L151.166 81.6323L150.035 82.1755L149.548 82.4132L147.952 83.1148H147.794L146.334 83.6807L145.78 83.8731L144.648 84.2352L144.014 84.4389L142.995 84.7332L142.35 84.9143L141.321 85.1745L140.709 85.3217L139.578 85.5593L139.057 85.6612C138.514 85.763 137.925 85.8649 137.439 85.9441C134.321 86.4326 131.165 86.6296 128.012 86.5326L138.027 92.6212C141.181 92.7279 144.337 92.5347 147.454 92.044L149.061 91.7611L149.593 91.6479L150.725 91.4216L151.336 91.2745L152.366 91.0142L153.147 90.8784L154.154 90.5841L154.788 90.3804L155.92 90.0183L156.474 89.8259C156.961 89.6448 157.447 89.4637 157.923 89.26L158.093 89.1921C158.624 88.9771 159.156 88.7394 159.688 88.4905L160.175 88.2641L161.307 87.7209L161.499 87.619L162.02 87.3361L162.676 86.9626L163.412 86.5326L164.057 86.1365L164.781 85.6612L165.403 85.2424L166.128 84.7219L166.727 84.2805L166.841 84.2013L167.112 83.9749C167.52 83.6581 167.916 83.3299 168.301 82.9903L168.787 82.5603C169.161 82.2208 169.545 81.8699 169.919 81.4965L170.202 81.2475C170.233 81.207 170.267 81.1692 170.304 81.1343L171.119 80.2629C171.254 80.1045 171.401 79.9687 171.537 79.8102C171.922 79.3689 172.296 78.9162 172.669 78.4522C173.031 77.9882 173.393 77.5015 173.801 77.0149C173.903 76.8565 174.004 76.6867 174.118 76.5283C174.355 76.1888 174.593 75.8379 174.808 75.4871L175.057 75.057C175.295 74.6609 175.532 74.2762 175.759 73.9253L176.098 73.2689C176.279 72.9181 176.472 72.5673 176.641 72.2051C176.665 72.1698 176.684 72.1318 176.698 72.092C176.754 71.9788 176.811 71.843 176.868 71.7185C177.105 71.1979 177.343 70.666 177.569 70.1228L177.852 69.3985C178.045 68.9005 178.226 68.3913 178.407 67.8707C178.407 67.7122 178.52 67.5651 178.565 67.4067C178.61 67.2882 178.647 67.1673 178.678 67.0445C178.769 66.7729 178.848 66.49 178.927 66.2071C179.007 65.9241 179.142 65.4714 179.244 65.0753C179.346 64.6792 179.391 64.4982 179.459 64.1926L179.731 63.0609C179.731 62.7667 179.855 62.4611 179.912 62.1442C179.969 61.8273 180.059 61.3294 180.127 60.9106C180.195 60.4919 180.229 60.2882 180.274 59.9713C180.319 59.6544 180.399 59.1112 180.444 58.6699C180.489 58.2285 180.523 58.0361 180.557 57.7079C180.591 57.3797 180.636 56.7686 180.67 56.2933C180.704 55.8179 180.727 55.6708 180.738 55.3539C180.738 54.822 180.795 54.2222 180.806 53.713V52.9094C180.715 51.9588 180.715 51.11 180.693 50.2386ZM92.2495 127.003C95.3391 128.893 97.4441 131.235 100.002 132.797L110.017 138.897C107.46 137.335 105.355 134.992 102.254 133.103L92.2495 127.003ZM85.9798 101.652C86.4778 101.652 86.9644 101.573 87.4511 101.516L87.9377 101.46C88.5262 101.392 89.0694 101.313 89.6919 101.222C92.9037 100.697 96.0623 99.8861 99.1303 98.8004C99.1303 90.1201 97.0593 82.1981 93.6302 76.7886C92.7543 75.3968 91.7131 74.1162 90.5293 72.9747C90.171 72.6218 89.7932 72.2894 89.3976 71.9788C89.0122 71.683 88.6118 71.4072 88.198 71.1526L78.1937 65.0527C81.3838 67.2515 83.8713 70.3245 85.3574 73.9027C86.7661 77.0046 87.7666 80.2762 88.3338 83.6354C88.4696 84.3597 88.5828 85.084 88.6733 85.8309C88.9771 88.1156 89.1246 90.4183 89.1147 92.7231C86.0498 93.7986 82.8948 94.5978 79.6875 95.111C79.1103 95.2015 78.5558 95.2807 77.9334 95.3486L77.4467 95.4052C76.9601 95.4052 76.4735 95.5071 75.9755 95.541H75.636C75.0475 95.541 74.5043 95.6089 73.8818 95.6202H71.6184C71.0299 95.6202 70.4867 95.6202 69.8643 95.5297H69.5813C69.0834 95.5297 68.5967 95.4278 68.1101 95.3599C67.9465 95.3491 67.7838 95.3264 67.6235 95.292C67.0803 95.2128 66.5483 95.1223 66.0164 95.0091H65.9033C65.3374 94.896 64.7716 94.7488 64.2397 94.5904L63.6398 94.4206L63.0174 94.2282L62.361 93.9906L61.7612 93.7642L61.1161 93.5039L60.5276 93.2436L59.9052 92.9381L59.3393 92.6438L58.3208 92.0667L68.2685 98.144C68.5402 98.3137 68.8118 98.4722 69.0947 98.6193L69.2758 98.7211L69.8529 99.0154L70.4754 99.3096L71.0639 99.5699C71.2789 99.6718 71.4826 99.7623 71.6976 99.8415L72.3088 100.068L72.9652 100.306L73.5763 100.498L73.9837 100.622H74.1761C74.7306 100.781 75.3078 100.917 75.851 101.041H75.9529C76.4848 101.154 77.0846 101.245 77.5712 101.324L78.0465 101.392C78.5332 101.46 79.0311 101.516 79.5291 101.562H79.812C80.3892 101.562 80.9437 101.641 81.5548 101.652H83.8183C84.4068 101.652 84.95 101.652 85.5837 101.562L85.9798 101.652Z" fill="#344DC9"/>
+<path d="M33.7286 42.0902L39.6814 45.7117L40.1907 46.006L40.4397 46.1305C40.666 46.2549 40.9037 46.3568 41.13 46.47L41.594 46.6624C41.8317 46.7529 42.0693 46.8434 42.307 46.9113L42.6239 47.0245H42.7371C43.1566 47.1469 43.5838 47.2414 44.0159 47.3074H44.197C44.5717 47.3648 44.9497 47.3988 45.3287 47.4093H47.1055C47.5468 47.4093 47.9995 47.3188 48.4522 47.2509C51.8473 46.7189 55.582 45.2138 59.9843 43.5954C65.0617 41.6297 70.3244 40.1813 75.6925 39.2723C76.711 39.1138 77.7635 38.9667 78.8387 38.8536C79.314 38.8536 79.778 38.763 80.242 38.7404H83.5353L84.2822 38.797L84.8367 38.8536L85.5384 38.9328L86.0929 39.012L86.772 39.1252L87.3152 39.227L87.9716 39.3741L88.5035 39.4986L89.1486 39.6684L89.5899 39.8042C90.0766 39.94 90.5632 40.0984 91.0385 40.2682C91.5063 40.4417 91.959 40.6228 92.3966 40.8114L92.7474 40.9472L94.0828 41.5697H94.1507C94.5695 41.7734 94.9882 41.9884 95.3956 42.2147L95.7125 42.3958C96.1312 42.6222 96.5273 42.8485 96.9347 43.0975L86.9191 36.9975L85.7081 36.2959L85.5497 36.2053L85.3913 36.1148C84.9725 35.8885 84.5651 35.6734 84.1464 35.4697H84.0785C83.6371 35.2547 83.1844 35.051 82.7317 34.8586L82.3922 34.7115C81.9509 34.5191 81.4869 34.338 81.0229 34.1796C80.5589 34.0098 80.0722 33.8627 79.5743 33.7156L79.4045 33.659L79.1329 33.5798L78.4539 33.4213L77.922 33.2968L77.2543 33.161L76.711 33.0479L76.032 32.9347L75.4775 32.8555L74.7758 32.7763L74.21 32.7197L73.4743 32.6631H70.2263C69.7623 32.6631 69.2983 32.731 68.823 32.7763C67.6913 32.8894 66.6954 33.0366 65.6768 33.195C60.3081 34.101 55.045 35.5495 49.9687 37.5181C45.555 39.1365 41.8317 40.6417 38.4252 41.1736C37.9725 41.2528 37.5312 41.298 37.0785 41.332H35.313C34.9282 41.332 34.5548 41.2754 34.1813 41.2188H34.0002L33.5362 41.083C33.4003 40.3604 33.2227 39.6462 33.0043 38.9441L23 32.8894C27.9003 48.7334 17.6017 88.1962 42.522 112.686C44.0591 114.187 45.7642 115.504 47.6034 116.613L57.6077 122.713C55.7704 121.601 54.0656 120.284 52.5264 118.786C29.0999 95.7673 36.7956 59.5412 33.7286 42.0902Z" fill="#4967F7"/>
+<path d="M189.147 24.8882C194.805 23.9942 199.626 20.9386 203.859 12.0999C199.898 31.803 208.058 67.8254 186.068 96.3106C170.79 116.116 148.96 120.439 137.733 125.95C137.245 126.197 136.795 126.513 136.398 126.889C133.749 129.458 122.919 139.7 118.494 140.391C110.142 141.715 107.89 136.339 101.835 132.842C96.086 129.526 66.3446 132.39 52.5377 118.786C27.6061 94.2735 37.9047 54.8786 33.0044 38.9894C38.38 46.5266 43.02 48.1336 48.4409 47.2735C51.8361 46.7416 55.5707 45.2364 59.9731 43.6181C65.0504 41.6524 70.3131 40.204 75.6812 39.2949C76.6998 39.1365 77.7523 38.9894 78.8274 38.8762C100.047 36.6128 108.829 58.2624 118.596 56.9836C128.781 55.3765 138.853 31.3729 156.882 26.4274C158.596 25.9592 160.334 25.5814 162.087 25.2956C167.018 24.6092 172.008 24.4688 176.969 24.8769C181.44 25.1372 185.48 25.4654 189.147 24.8882ZM147.568 92.1119C163.321 89.6335 181.315 79.0293 180.693 50.2386C170.27 56.6101 158.24 53.7808 149.673 61.1483C142.826 67.0445 138.163 79.7762 138.14 92.6891C141.294 92.7958 144.451 92.6025 147.568 92.1119ZM89.6918 101.166C92.9019 100.658 96.0605 99.8669 99.1303 98.8003C99.1303 85.8649 94.5129 74.6156 87.6887 70.8697C79.1556 66.1957 67.1142 72.8162 56.6911 69.738C55.9781 98.8003 73.9271 103.701 89.6918 101.222" fill="#8FD0FF"/>
+<defs>
+<linearGradient id="paint0_linear_1913_2" x1="296.875" y1="248.981" x2="23" y2="248.981" gradientUnits="userSpaceOnUse">
+<stop stop-color="#000F5B"/>
+<stop offset="1" stop-color="#4D6BFE"/>
+</linearGradient>
+<linearGradient id="paint1_linear_1913_2" x1="137.89" y1="239.109" x2="281.144" y2="205.359" gradientUnits="userSpaceOnUse">
+<stop offset="0.0407225" stop-color="#4D6BFE" stop-opacity="0"/>
+<stop offset="0.40057" stop-color="#4D6BFE"/>
+<stop offset="1" stop-color="#4D6BFE"/>
+</linearGradient>
+</defs>
+</svg>
+</span>
+      <div><h1>AgentKeyGuard</h1><p>Web 门户 · 管理员会话</p></div>
+    </div>
+    <nav class="tabs">
+      <button class="tab active" data-tab="pending">审批工作台</button>
+      <button class="tab" data-tab="profiles">凭证</button>
+      <button class="tab" data-tab="services">服务</button>
+      <button class="tab" data-tab="skill">Agent 接入</button>
+      <button class="tab" data-tab="settings">设置</button>
+    </nav>
+    <div class="who"><span class="dot"></span><span id="deviceName">…</span><span class="ver">__VERSION__</span></div>
+    <button class="ghost" onclick="logout()" aria-label="退出登录"><span class="lg">退出登录</span><span class="sm">退出</span></button>
+  </header>
+
+  <main>
+    <section class="panel" id="tab-pending">
+      <div class="pagehead">
+        <div><h1>审批工作台</h1><div class="sub" id="pendingHint">等待 Agent 请求</div></div>
+      </div>
+
+      <div class="stack">
+        <div class="card">
+          <div class="card-head"><span class="t">待审批</span><span class="n">按「签名 + 类型 + 凭证」折叠</span></div>
+          <div class="card-body" id="pendingList"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><span class="t">拦截策略</span><span class="n">rules.json</span>
+            <div class="r"><button class="ghost" onclick="switchTab('settings');switchSettings('account')">管理</button></div></div>
+          <div class="strategy">
+            <div class="metric"><b id="m403" style="color:var(--danger)">–</b><span>绝对禁区 · 直接 403，不弹审批</span></div>
+            <div class="metric"><b id="m428" style="color:var(--warn)">–</b><span>高危 · 先答灵魂三问</span></div>
+            <div class="metric"><b id="mCustom" style="color:var(--brand-300)">–</b><span>自定义规则</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><span class="t">最近记录</span><span class="n">最近 5 条审批</span></div>
+          <div id="recentList"></div>
+        </div>
+
+        <details class="card hist" id="historyCard">
+          <summary class="card-head">
+            <span class="t">审批历史</span><span class="n" id="histCount">…</span>
+            <div class="r"><button class="ghost" onclick="event.preventDefault();event.stopPropagation();clearHistory()">清空</button></div>
+          </summary>
+          <p class="meta" style="margin:0;padding:10px 16px 0">只存动作摘要，不存明文</p>
+          <div id="historyList" class="list" style="padding:0 16px 10px"></div>
+        </details>
+      </div>
+    </section>
+
+    <section class="panel hide" id="tab-profiles">
+      <div class="section-head"><h2>凭证</h2>
+        <button class="ghost" id="pfToggle" onclick="toggleProfileForm()">＋ 添加凭证</button></div>
+      <p class="meta" style="margin:0 0 14px">密码/密钥默认隐藏；眼睛图标查看时需要 TOTP。</p>
+      <div class="form hide" id="profileForm">
+        <label>名称</label><input id="pfName" placeholder="stock_raw">
+        <div class="types" id="pfTypes">
+          <span class="on" data-t="pg" onclick="setPfType('pg',this)">PostgreSQL</span>
+          <span data-t="mysql" onclick="setPfType('mysql',this)">MySQL</span>
+          <span data-t="redis" onclick="setPfType('redis',this)">Redis</span>
+          <span data-t="ssh" onclick="setPfType('ssh',this)">SSH</span>
+          <span data-t="git" onclick="setPfType('git',this)">Git 仓库</span>
+        </div>
+        <select id="pfType" onchange="syncProfileType()" style="display:none">
+          <option value="pg">PostgreSQL</option><option value="mysql">MySQL</option>
+          <option value="redis">Redis</option><option value="ssh">SSH</option>
+          <option value="git">Git 仓库</option></select>
+        <div data-type="pg">
+          <div class="f2"><div><label>主机</label><input id="pfHost" placeholder="127.0.0.1"></div>
+            <div><label>端口</label><input id="pfPort" type="number" value="5432"></div></div>
+          <div class="f2"><div><label>用户</label><input id="pfUser" placeholder="vb_ro"></div>
+            <div><label>密码</label><input id="pfPassword" type="password"></div></div>
+          <label>默认库<span class="meta" style="margin-left:8px">可留空，Agent 请求时再指定</span></label>
+          <input id="pfDb" placeholder="postgres">
+          <label><input id="pfReadonly" type="checkbox" checked style="width:auto"> 只读</label>
+          <label>sslmode</label><select id="pfSsl">
+            <option>disable</option><option>require</option><option>verify-ca</option><option>verify-full</option></select>
+        </div>
+        <div data-type="mysql" class="hide">
+          <div class="f2"><div><label>主机</label><input id="pfHostMysql" placeholder="127.0.0.1"></div>
+            <div><label>端口</label><input id="pfPortMysql" type="number" value="3306"></div></div>
+          <div class="f2"><div><label>用户</label><input id="pfUserMysql" placeholder="vb_ro"></div>
+            <div><label>密码</label><input id="pfPasswordMysql" type="password"></div></div>
+          <label>默认库<span class="meta" style="margin-left:8px">可留空，Agent 请求时再指定</span></label>
+          <input id="pfDbMysql" placeholder="app">
+          <label><input id="pfReadonlyMysql" type="checkbox" checked style="width:auto"> 只读</label>
+          <label>sslmode</label><select id="pfSslMysql">
+            <option>disable</option><option>require</option><option>verify-ca</option><option>verify-full</option></select>
+        </div>
+        <div data-type="redis" class="hide">
+          <div class="f2"><div><label>主机</label><input id="pfHostRedis" placeholder="127.0.0.1"></div>
+            <div><label>端口</label><input id="pfPortRedis" type="number" value="6379"></div></div>
+          <div class="f2"><div><label>密码<span class="meta" style="margin-left:8px">可留空</span></label><input id="pfPasswordRedis" type="password"></div>
+            <div><label>库号（0-15）</label><input id="pfDbRedis" type="number" value="0" min="0" max="15"></div></div>
+          <label><input id="pfReadonlyRedis" type="checkbox" checked style="width:auto"> 只读</label>
+          <p class="meta">写命令需审批，清库 / 改配置 / 执行脚本一律拒绝。</p>
+        </div>
+        <div data-type="ssh" class="hide">
+          <div class="f2"><div><label>主机</label><input id="pfHostSsh" placeholder="127.0.0.1"></div>
+            <div><label>端口</label><input id="pfPortSsh" type="number" value="22"></div></div>
+          <div class="f2"><div><label>用户</label><input id="pfUserSsh" placeholder="root"></div>
+            <div><label>密码</label><input id="pfPasswordSsh" type="password"></div></div>
+          <!-- 私钥录入已隐藏：私钥本身从不下发给 Agent（Broker 只代跑命令），
+               录进控制台只会多一处暴露面，收益为零。
+               旧凭证里的 private_key 仍可读可用（后端兼容），这里只关掉录入入口。 -->
+          <div class="hide">
+            <label>私钥内容（可留空）</label><textarea id="pfKey" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"></textarea>
+          </div>
+          <label>hostkey（可留空 = TOFU）</label><input id="pfHostkey">
+          <label>sudo</label><select id="pfSudo"><option>none</option><option>auto</option><option>required</option></select>
+        </div>
+        <div data-type="git" class="hide">
+          <div class="f2"><div><label>站点地址</label><input id="pfGitBase" placeholder="http://192.0.2.10:3000"></div>
+            <div><label>用户名</label><input id="pfGitUser" placeholder="agent_bot"></div></div>
+          <label>Token<span class="meta" style="margin-left:8px">已配置时留空表示不改</span></label>
+          <input id="pfGitToken" type="password" autocomplete="off"
+                 placeholder="粘贴 Access Token（HTTPS 用）">
+          <label>仓库地址<span class="meta" style="margin-left:8px">仅「测试连接」用，不保存</span></label>
+          <input id="pfGitTestUrl" placeholder="http://192.0.2.10:3000/HomeLab/agent_key_guard.git">
+          <p class="meta">凭证就上面前三条。仓库地址不进凭证：Agent 每次请求自带 URL，
+            Broker 校验与站点同源后注入 Token，所以仓库改名、开新库都不用改凭证。</p>
+          <p class="meta">只走 HTTPS + Token，不用 SSH 私钥：私钥文件落在 AI 能读的机器上就等于明文。</p>
+        </div>
+        <!-- 「账号 / HTTP」类型已移除：它只是个能测活的兜底位，没有执行通道，
+             也没有明确指向。凭证只保留「一眼看出指向哪里」的五种：
+             PostgreSQL / MySQL / Redis / SSH / Git 仓库。 -->
+        <div class="row" style="margin-top:14px;justify-content:flex-end;gap:10px">
+          <button class="ghost" onclick="testProfile()">测试连接</button>
+          <button class="ok" onclick="saveProfile()">保存凭证</button>
+        </div>
+        <p id="testResult" class="meta"></p>
+      </div>
+      <div id="profileList" class="list" style="margin-top:12px"></div>
+    </section>
+
+    <section class="panel hide" id="tab-services">
+      <div class="section-head"><h2>服务</h2>
+        <div class="row" style="gap:8px;flex:0 0 auto;justify-content:flex-end">
+          <a class="ghost" href="/service-spec" target="_blank" rel="noopener">打开开发规范</a>
+          <button class="ghost" onclick="copySpecUrl()">复制链接</button>
+          <a class="ghost" href="/service-spec?download=1" download>下载</a>
+        </div></div>
+      <p class="meta" style="margin:0 0 14px">把 .env 注入给项目：Agent 拿到的是地址，真值由 Broker 在请求时替换。</p>
+      <div class="form">
+        <label>服务名</label><input id="svcName" placeholder="web">
+        <label>环境变量（整段粘贴会自动识别成键值对）</label>
+        <textarea id="svcEnv" placeholder="DB_URL=postgres://user:pass@db/app&#10;API_KEY=xxxx"
+                  oninput="onEnvPaste()"></textarea>
+        <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap;justify-content:flex-start">
+          <button class="ghost" type="button" style="width:auto;padding:0 12px" onclick="onEnvPaste()">重新识别</button>
+          <button class="ghost" type="button" style="width:auto;padding:0 12px" onclick="addEnvRow()">+ 添加一行</button>
+          <button class="ghost" type="button" style="width:auto;padding:0 12px" onclick="clearEnvRows()">清空</button>
+        </div>
+        <div id="envRows" style="margin-top:10px"></div>
+        <div id="envUnknown" class="hide" style="margin-top:10px"></div>
+        <p class="meta" id="envError" style="color:#ffb86b"></p>
+        <button class="ok" style="margin-top:12px" onclick="createService()">创建服务并生成注入 URL</button>
+      </div>
+      <div id="serviceResult"></div>
+      <div id="serviceList" class="list" style="margin-top:16px"></div>
+    </section>
+
+    <section class="panel hide" id="tab-skill">
+      <div class="pagehead">
+        <div><h1>Agent 接入</h1><div class="sub">生成一次性接入链接，10 分钟有效、仅可使用一次。</div></div>
+        <a class="ghost ph-act" href="/skill" target="_blank" rel="noopener">打开 MD 文档</a>
+      </div>
+      <div class="section-head"><h2>已接入 Agent</h2>
+        <button class="ok" id="ticketBtn" style="flex:0 0 auto;height:32px;padding:0 14px" onclick="openTicketForm()">＋ 添加密钥</button></div>
+      <div id="ticketForm" class="card hide">
+        <label>这个密钥给谁用（会话签名）</label>
+        <input id="ticketName" maxlength="32" placeholder="如 Claude-桌面版 / 终端B / 运维脚本">
+        <div class="row" style="gap:8px;margin-top:10px;justify-content:flex-start">
+          <button class="ok" style="flex:0 0 auto;height:34px;padding:0 14px" onclick="issueTicket(this)">生成链接</button>
+          <button class="ghost" style="flex:0 0 auto;height:34px" onclick="closeTicketForm()">取消</button>
+        </div>
+      </div>
+      <div id="ticketBox" class="codebox hide" style="margin-top:12px">
+        <code id="ticketUrl"></code>
+        <button class="ghost" onclick="copyTicket()">复制</button>
+      </div>
+      <p class="meta" id="ticketHint" style="color:#FFC24B;margin-top:8px"></p>
+      <div id="skillAgentList" class="list" style="margin-top:12px"></div>
+
+      <div class="section-head" style="margin-top:22px"><h2>最近 Agent 读取</h2></div>
+      <div id="agentList" class="list" style="margin-top:10px"></div>
+    </section>
+
+    <section class="panel hide" id="tab-settings">
+      <div class="settings-layout">
+      <div class="subnav">
+        <button class="subtab active" data-settings="account">账号与安全</button>
+        <button class="subtab" data-settings="notify">通知与审批</button>
+        <button class="subtab" data-settings="network">访问地址与证书</button>
+        <button class="subtab" data-settings="hardware">硬件</button>
+      </div>
+
+      <div class="settings-page" id="set-account">
+        <div class="card">
+          <h3>管理员</h3>
+          <p>当前管理员：<b id="adminName">…</b></p>
+          <p class="meta">登录方式为管理员用户名 + 密码 + TOTP。不勾选「本窗口保持登录」时，停手 15 分钟自动退出；勾选后只要窗口开着就一直有效。两种方式关闭浏览器都需要重新登录。</p>
+          <button class="ghost" onclick="logout()">退出登录</button>
+        </div>
+
+        <div class="card">
+          <div class="row" style="justify-content:space-between;align-items:center">
+            <h3 style="margin:0">登录会话</h3>
+            <div class="row" style="gap:8px;align-items:center;flex:0 0 auto">
+              <span class="badge ok" id="sessCount">…</span>
+              <button class="ghost hide" id="sessPrune" style="flex:0 0 auto;padding:0 12px"
+                      onclick="pruneSess()">清理已离线</button>
+            </div>
+          </div>
+          <p class="meta" id="sessSub">…</p>
+          <div id="sessList" style="margin-top:8px"></div>
+          <details class="his-fold" id="sessHisFold">
+            <summary>近期记录 <span class="meta" id="sessHisCount"></span></summary>
+            <div id="sessHistory" style="margin-top:8px"></div>
+          </details>
+        </div>
+
+        <div class="card">
+          <div class="row card-hd" style="justify-content:space-between;align-items:center">
+            <h3 style="margin:0">拦截策略</h3>
+            <div class="row" style="gap:8px;align-items:center;flex:0 0 auto">
+              <span class="badge ok" id="secRuleCount">…</span>
+              <button class="ghost" style="flex:0 0 auto;padding:0 12px" onclick="openRuleAdd()">+ 添加规则</button>
+            </div>
+          </div>
+          <p class="meta">Agent 发来的每条命令都走同一条路：先过 <b>403</b>，再过 <b>428</b>，最后才到审批台。两个等级只是同一条流水线上的两道闸，不是两套系统。</p>
+          <div class="layer-flow">
+            <span class="badge ng">403 直接拦截</span><i>→</i>
+            <span class="badge warn">428 灵魂三问</span><i>→</i>
+            <span class="badge ok">审批台</span>
+          </div>
+          <input id="secRuleSearch" placeholder="在两级规则里搜索…" oninput="renderSecRules()"
+                 style="margin-top:10px;height:30px;padding:4px 10px;font-size:12px">
+
+          <div class="layer-group">
+            <div class="layer-head">
+              <b>403 直接拦截</b>
+              <span class="badge ng">不弹审批</span>
+            </div>
+            <p class="meta">命中即拒绝，连「同意」这个选项都不给你——看不懂的命令不值得占用你一次判断。改动任意一条都要主密码 + 动态码。</p>
+            <div id="secRuleList" class="list" style="margin-top:8px"></div>
+          </div>
+
+          <div class="layer-group">
+            <div class="layer-head">
+              <b>428 灵魂三问</b>
+              <span class="badge warn">自审 + 审批</span>
+              <span class="meta" id="secReflectCount" style="margin:0">…</span>
+            </div>
+            <p class="meta">Agent 必须先回答「我是谁、我在哪儿、我打算干什么」，答完才推手机等你批准。关掉自审只免掉那次问答，<b>审批照样会弹</b>。</p>
+            <div id="secReflectList" class="list" style="margin-top:8px"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-page hide" id="set-notify">
+        <div class="card">
+          <h3>通知推送（Bark）</h3>
+          <p class="meta">完整地址或只填 22 位 Key 都行（会自动补成 <code>https://api.day.app/KEY</code>）；点「测试」会真的发一条到手机。</p>
+          <div class="form">
+            <label>Bark Key / 完整 URL</label>
+            <div class="row" style="gap:8px;align-items:stretch">
+              <input id="stBark" placeholder="https://api.day.app/KEY 或只填 KEY" style="flex:1">
+              <button class="ghost" type="button" style="width:auto;padding:0 14px"
+                      onclick="testBark()">测试</button>
+              <button class="ghost" type="button" id="barkToggle" style="width:auto;padding:0 14px"
+                      onclick="toggleBark()">停用</button>
+            </div>
+            <p class="meta" id="stBarkResult" style="margin-top:6px"></p>
+            <label>审批超时（秒）</label><input id="stTimeout" type="number" value="300" min="30" max="3600">
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h3>Webhook 通知渠道</h3>
+          <p class="meta">安卓用户建议新建一条 <code>ntfy</code> 或 <code>钉钉</code> 渠道，审批就能推到手机。
+            这些是系统的通知出口，<b>Agent 看不到、也调不了</b>，不会进凭证列表。</p>
+          <div id="notifyList" class="list" style="margin-top:10px"></div>
+          <div class="form" style="margin-top:12px">
+            <label>渠道名</label><input id="ntName" placeholder="家庭群">
+            <label>预设</label><select id="ntPreset">
+              <option value="custom">自定义</option><option value="dingtalk">钉钉</option>
+              <option value="feishu">飞书</option><option value="wecom">企业微信</option>
+              <option value="slack">Slack</option><option value="telegram">Telegram</option>
+              <option value="ntfy">ntfy</option><option value="gotify">Gotify</option></select>
+            <label>地址</label><input id="ntUrl" placeholder="https://...">
+            <label>密钥<span class="meta" style="margin-left:8px">可选；已配置时留空表示不改</span></label>
+            <input id="ntSecret" type="password" autocomplete="off">
+            <div class="row" style="margin-top:12px">
+              <button class="ok" onclick="saveNotify()">添加渠道</button>
+            </div>
+          </div>
+        </div>
+        <button class="ok" onclick="saveSettings()">保存设置</button>
+      </div>
+
+            <div class="settings-page hide" id="set-network">
+        <div class="card">
+          <h3>访问地址</h3>
+          <p class="meta">审批链接、二维码、证书 SAN 都用这个地址生成。改之前先确认手机能打开它。</p>
+          <div class="form">
+            <label>Public Base<span class="meta" style="margin-left:8px">留空 = 自动跟随当前访问地址；默认只读</span></label>
+            <div class="row" style="gap:6px;margin-top:6px">
+              <input id="stBase" readonly style="flex:1" placeholder="留空即自动">
+              <button class="ghost" style="flex:0 0 auto" onclick="copyPublicBase()">复制</button>
+              <button class="ghost" style="flex:0 0 auto" id="baseEditBtn" onclick="toggleBaseEdit()">编辑</button>
+            </div>
+          </div>
+          <p class="meta" style="margin-top:8px">当前生效：<code id="addrEffective">…</code></p>
+          <div class="section-head" style="margin-top:14px">
+            <h3 style="margin:0;font-size:14px">本机可用入口</h3>
+            <span class="meta">同一端口同时接受 HTTP / HTTPS</span>
+          </div>
+          <div id="addrList" class="list" style="margin-top:10px"></div>
+          <p class="meta" id="addrWarn" style="color:#ffb86b"></p>
+          <p class="meta" id="addrNotice"></p>
+          <p class="meta">手机可用 = 同一局域网 + 放行端口，首次访问需信任根证书（见下方）。</p>
+        </div>
+
+        <div class="card">
+          <h3>域名与根证书</h3>
+          <p class="meta">根证书只让浏览器信任本机服务，不含客户端身份；升级复用同一 CA，装一次即可。</p>
+          <p class="meta">CA 指纹：<code id="caFingerprint">…</code></p>
+          <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:10px;justify-content:flex-start">
+            <a class="ghost" href="/ca.crt" style="text-decoration:none;padding:9px 12px">下载 ca.crt</a>
+            <a class="ghost" href="/ca.mobileconfig" style="text-decoration:none;padding:9px 12px">iPhone 描述文件</a>
+            <a class="ghost" href="/dashboard?https=1" style="text-decoration:none;padding:9px 12px">切换到 HTTPS</a>
+          </div>
+          <label style="margin-top:12px">访问域名<span class="meta" style="margin-left:8px">默认只读，点「编辑」才可改</span></label>
+          <div class="row" style="gap:6px;margin-top:6px">
+            <input id="certDomain" readonly style="flex:1" placeholder="example.akg.arpa">
+            <button class="ghost" style="flex:0 0 auto" onclick="copyAccessUrl()">复制</button>
+            <button class="ghost" style="flex:0 0 auto" id="domainEditBtn" onclick="toggleDomainEdit()">编辑</button>
+            <button class="ok" style="flex:0 0 auto" onclick="openDns()">换发</button>
+          </div>
+          <p class="meta">「复制」给的是带端口的完整地址，可直接粘给手机。域名一般不用改；要改先按 README 配好 DNS。</p>
+          <details style="margin-top:10px"><summary class="meta" style="cursor:pointer">手机怎么装证书 / 证书诊断</summary>
+            <p class="meta">iOS：设置 → 通用 → VPN 与设备管理 → 安装；再到 通用 → 关于本机 → 证书信任设置 → 对 AgentKeyGuard Root CA 开启完全信任。</p>
+            <p class="meta">Android：设置 → 安全 → 加密与凭据 → 安装证书 → CA 证书 → 选 ca.crt。</p>
+            <p class="meta">Windows / macOS：双击 ca.crt 装到「受信任的根证书颁发机构」；macOS 在钥匙串里设为始终信任。</p>
+            <p class="meta">服务器证书 SAN：<code id="caSan">…</code></p>
+            <p class="meta">当前 Host：<code id="caHost">…</code></p>
+            <p class="meta">旧证书清理：系统证书管理器搜「AgentKeyGuard Local CA」，对比上面的指纹删旧的，别删当前这把。</p>
+          </details>
+        </div>
+        <button class="ok" onclick="saveSettings()">保存设置</button>
+      </div>
+
+      <div class="settings-page hide" id="set-hardware">
+        <div class="card">
+          <h3>审批小硬件 <span class="badge">构想</span></h3>
+          <p class="meta">一个不经过手机、握在手里的审批终端：带小屏、两个按键和麦克风，按下即通过，按住拒绝可以口述理由。它要解决的不是「方便」，而是让审批重新变成一个物理动作。</p>
+          <p class="meta">这只是一份想法，不是路线图承诺；现在的手机审批与推送不会因此改变。</p>
+        </div>
+
+        <div class="card">
+          <h3>可以是什么样</h3>
+          <ul class="concept">
+            <li><b>形态</b>小遥控器大小，正面一块 1.3 寸屏，拇指区两个按键，顶部留挂绳孔。</li>
+            <li><b>通过</b>单击放行；高危请求（428）改成按住确认，避免手指一滑就过了。</li>
+            <li><b>拒绝</b>短按直接拒绝；按住录音、松开发送，语音在服务端转成文字，作为拒绝理由回给 Agent。</li>
+            <li><b>连接</b>家里插在底座上常供电，出门用电池；断网时至少能看见待办。</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>怎么接进来</h3>
+          <p class="meta">设备不共享管理员会话，而是作为一种独立身份接入：控制台生成一次性绑定链接，设备换取自己的密钥，权限只有「看待审批 / 同意 / 拒绝」，丢了可随时吊销。</p>
+          <p class="meta">每条审批会标注来源（网页 / 手机 / 硬件），和现在的审计是同一条链。</p>
+        </div>
+
+        <div class="card">
+          <h3>现在的状态</h3>
+          <p class="meta">还没有开始做硬件。近期的精力主要还在学习上，等项目再往前走一步，才会考虑原型。</p>
+          <p class="meta">如果你会画板、写固件或做结构，欢迎加入——这个页面就是留给二次开发的入口。</p>
+        </div>
+      </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="secAuth" class="modal hide"><div class="sheet">
+  <h3 id="secAuthTitle">确认关闭这条拦截</h3>
+  <p class="meta" id="secAuthDesc"></p>
+  <label>主密码</label><input id="secMaster" type="password" autocomplete="off">
+  <label>动态码</label><input id="secTotp" inputmode="numeric" maxlength="6" placeholder="000000">
+  <div class="row" style="margin-top:12px">
+    <button class="ghost" style="flex:1" onclick="closeSecAuth()">取消</button>
+    <button class="danger-btn" style="flex:1" id="secAuthBtn" onclick="confirmSecAuth()">确认关闭</button>
+  </div>
+</div></div>
+
+<div id="ruleAddModal" class="modal hide"><div class="sheet">
+  <h3>添加自定义规则</h3>
+  <p class="meta">命中的操作按你选的层级处理。规则存在加密库里，升级不会丢，也不会碰系统自带的规则文件。</p>
+  <label>规则名（唯一，字母数字 . _ -，最长 64）</label>
+  <input id="ruleName" placeholder="例如 no_backup_read">
+  <label>说明（给自己看）</label>
+  <input id="ruleDesc" placeholder="例如：禁止读取备份盘">
+  <label>匹配方式</label>
+  <div class="row" style="gap:14px;align-items:center;margin-bottom:8px">
+    <label class="meta" style="margin:0"><input type="radio" name="ruleMode" value="kw" checked
+      onchange="ruleModeSwitch()"> 关键词</label>
+    <label class="meta" style="margin:0"><input type="radio" name="ruleMode" value="re"
+      onchange="ruleModeSwitch()"> 正则（高级）</label>
+  </div>
+  <div id="ruleKwBox">
+    <label>关键词（换行或逗号分隔，任一命中即拦）</label>
+    <textarea id="ruleKw" placeholder="/backup&#10;rsync"></textarea>
+  </div>
+  <div id="ruleReBox" class="hide">
+    <label>正则（每行一条，全部命中才算）</label>
+    <textarea id="ruleRe" placeholder="\brm\b&#10;-rf"></textarea>
+  </div>
+  <label>作用通道</label>
+  <div class="row" style="gap:14px;align-items:center;margin-bottom:8px">
+    <label class="meta" style="margin:0"><input type="checkbox" class="ruleScope" value="shell" checked> shell</label>
+    <label class="meta" style="margin:0"><input type="checkbox" class="ruleScope" value="sql"> sql</label>
+    <label class="meta" style="margin:0"><input type="checkbox" class="ruleScope" value="git"> git</label>
+  </div>
+  <label>拦截等级</label>
+  <select id="ruleLayer">
+    <option value="dangerous">428 灵魂三问（Agent 自审后推审批）</option>
+    <option value="blocked">403 直接拦截（不弹审批）</option>
+  </select>
+  <p class="meta" style="margin:-4px 0 0">拿不准就选 428：先自审再让你决定，仍可拒绝；403 连「同意」都不给。</p>
+  <label>试运行（不写库，只看会不会命中）</label>
+  <div class="row" style="gap:8px;align-items:stretch">
+    <input id="ruleTestCmd" placeholder="填一条命令，例如 rm -rf /data" style="flex:1">
+    <button class="ghost" type="button" style="width:auto;padding:0 12px"
+            onclick="testRuleMatch()">试运行</button>
+  </div>
+  <p class="meta" id="ruleTestResult" style="margin-top:6px"></p>
+  <div class="row" style="margin-top:12px">
+    <button class="ghost" style="flex:1" onclick="closeRuleAdd()">取消</button>
+    <button class="ok" style="flex:1" onclick="saveNewRule()">保存规则</button>
+  </div>
+</div></div>
+
+<div id="dnsGuide" class="modal hide"><div class="sheet">
+  <h3>配置访问域名并换发证书</h3>
+  <p class="meta">本质只有一件事：把域名解析到本机地址，再换发证书。<br>
+  添加记录：<code id="dnsDomain">example.akg.arpa</code> → <code id="dnsTarget">…</code><br>
+  不同设备叫法不同：AdGuard Home「DNS 重写」、Pi-hole「Local DNS」、
+  OpenWrt/dnsmasq「静态 DNS」、路由器「主机映射 / 静态 DNS」。<br>
+  手机 Wi-Fi 的 DNS 需要指向做解析的那台设备，否则解析不到。</p>
+  <p id="dnsResult" class="meta"></p>
+  <div class="row" style="margin-top:12px">
+    <button class="ghost" style="flex:1" onclick="verifyDns()">检测解析</button>
+    <button class="ok" style="flex:1" onclick="reissueCert()">换发证书</button>
+  </div>
+  <button class="ghost" style="width:100%;margin-top:10px" onclick="closeDns()">关闭</button>
+</div></div>
+
+<div id="denyModal" class="modal hide">
+  <div class="sheet">
+    <h3>拒绝原因</h3>
+    <p class="meta">Agent 会看到这段原因（可留空）。</p>
+    <textarea id="denyReason" maxlength="500" placeholder="例如：我在跑任务，晚点再重启"></textarea>
+    <div class="row" style="margin-top:12px">
+      <button class="ghost" style="flex:1" onclick="closeDeny()">取消</button>
+      <button class="danger-btn" style="flex:1" onclick="confirmDeny()">确认拒绝</button>
+    </div>
+  </div>
+</div>
+
+<div id="delSvcModal" class="modal hide">
+  <div class="sheet">
+    <h3>删除服务</h3>
+    <p class="meta">即将删除 <code id="delSvcName"></code>。删除后它的注入 URL 立即失效，且不可恢复。</p>
+    <p class="meta">只想停用、保留记录的话，请用「撤销」。</p>
+    <div class="row" style="margin-top:12px">
+      <button class="ghost" style="flex:1" onclick="closeDelSvc()">取消</button>
+      <button class="danger-btn" style="flex:1" onclick="doDeleteService()">确认删除</button>
+    </div>
+  </div>
+</div>
+
+<div id="delEnvModal" class="modal hide">
+  <div class="sheet">
+    <h3>删除键值对</h3>
+    <p class="meta">即将删除 <code id="delEnvKeyName"></code>。只删这一条留档，当前生效的推送地址不受影响；要换地址请回「设置」修改。</p>
+    <div class="row" style="margin-top:12px">
+      <button class="ghost" style="flex:1" onclick="closeDelEnv()">取消</button>
+      <button class="danger-btn" style="flex:1" onclick="doDeleteEnvKey()">确认删除</button>
+    </div>
+  </div>
+</div>
+
+<div id="revealModal" class="modal hide">
+  <div class="sheet">
+    <h3>查看凭证密钥</h3>
+    <p class="meta">只输入当前 6 位 TOTP，不要求主密码。显示 15 秒后自动隐藏。</p>
+    <label>TOTP 6 位码</label>
+    <input id="rvTOTP" type="hidden">
+    <div class="rv-cells" id="rvCells">
+      <input class="rv-cell" maxlength="1" inputmode="numeric"><input class="rv-cell" maxlength="1" inputmode="numeric">
+      <input class="rv-cell" maxlength="1" inputmode="numeric"><input class="rv-cell" maxlength="1" inputmode="numeric">
+      <input class="rv-cell" maxlength="1" inputmode="numeric"><input class="rv-cell" maxlength="1" inputmode="numeric">
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="ghost" style="flex:1" onclick="closeReveal()">取消</button>
+      <button class="ok" style="flex:1" onclick="doReveal()">查看</button>
+    </div>
+  </div>
+</div>
+<div class="promo" aria-hidden="true" style="display:none"><div class="in">
+  <div><b>真值不落盘</b><span>密码与 Token 只在 Broker 内存里，磁盘上只有密文。</span></div>
+  <div><b>查看要动态码</b><span>眼睛图标需要 TOTP，明文只显示 15 秒。</span></div>
+  <div><b>每次使用都留痕</b><span>谁、何时、用了哪条凭证，审计可查。</span></div>
+</div></div>
+<div id="detailMask" class="drawer-mask" onclick="if(event.target===this)closeDetail()">
+  <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+    <div class="drawer-head">
+      <span class="badge warn">待审批</span>
+      <span class="drawer-sub" id="dSub"></span>
+      <button class="ghost" onclick="closeDetail()" style="flex:0 0 auto;margin-left:auto">关闭</button>
+    </div>
+    <div class="drawer-body" id="dBody"></div>
+    <div class="drawer-foot" id="dFoot"></div>
+  </aside>
+</div>
+<button id="apprBadge" class="appr-float hide" onclick="jumpToPending()">
+  <span class="dot"></span><b id="apprCount">0</b><span class="lbl">条待审批</span>
+</button>
+<div id="sessBar" class="sessbar"><div class="in">
+  <span class="dot"></span><span id="sessText">已登录</span>
+  <span class="right"><span id="sessWho">admin</span><span id="sessHost"></span></span>
+</div></div>
+<div id="toast" class="toast hide"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(msg, ok = true) {
+  const t = $('toast'); t.textContent = msg; t.className = 'toast' + (ok ? '' : ' ng');
+  setTimeout(() => t.classList.add('hide'), 2600);
+}
+let CSRF = '';
+// 本机默认域名：由 /api/me 的 default_domain 填充（REQ-141）。
+// 这里的值只是后端返回前的兜底示例，必须用通用名，不能写死真实主机名。
+let DEFAULT_DOMAIN = 'example.akg.arpa';
+// 真实端口取自当前访问地址，不写死：换端口部署时复制出来的地址跟着变
+const PUBLIC_PORT = location.port || (location.protocol === 'https:' ? '443' : '80');
+function portSuffix() {
+  return (PUBLIC_PORT === '443' || PUBLIC_PORT === '80') ? '' : ':' + PUBLIC_PORT;
+}
+let leaving = false;
+function safeNext() {
+  const n = new URLSearchParams(location.search).get('next') || '';
+  if (!n.startsWith('/') || n.startsWith('//')) return '/dashboard';
+  if (n === '/login' || n.startsWith('/login?')) return '/dashboard';
+  return n;
+}
+function toLogin() {
+  // 会话失效与主动锁定统一走这里：只跳一次，避免轮询反复触发。
+  if (leaving || location.pathname === '/login') return;
+  leaving = true;
+  const back = location.pathname + location.search;
+  location.replace('/login?next=' + encodeURIComponent(back));
+}
+async function api(path, opts = {}) {
+  const headers = {'Content-Type': 'application/json', ...(opts.headers || {})};
+  const method = (opts.method || 'GET').toUpperCase();
+  if (CSRF && method !== 'GET' && method !== 'HEAD') headers['X-CSRF-Token'] = CSRF;
+  const r = await fetch(path, {cache: 'no-store', credentials: 'same-origin', ...opts, headers});
+  const j = await r.json().catch(() => ({error: 'bad json'}));
+  if (!r.ok) {
+    if (r.status === 401 && (j.error === 'login_required' || j.error === 'unlock_required')) {
+      CSRF = '';
+      toLogin();
+    }
+    throw new Error(j.error || ('HTTP ' + r.status));
+  }
+  return j;
+}
+// ───────────────────── 会话状态条 ─────────────────────
+// 勾选档：轮询自己续期，这里只陈述「关闭窗口即退出」，不暴露 4 小时兜底数字。
+// 不勾档：本地按 idle_in 每秒递减，≤60 秒转警示色，归零直接跳登录（不等 401）。
+let SESS = null;
+let sessTimer = null;
+let touchAt = 0;
+let touchBound = false;
+let byeBound = false;
+const TOUCH_GAP = 60000;
+
+function fmtClock(sec) {
+  const s = Math.max(0, Math.round(sec));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return (m < 10 ? '0' : '') + m + ':' + (r < 10 ? '0' : '') + r;
+}
+
+function renderSess() {
+  const bar = $('sessBar'), txt = $('sessText');
+  if (!bar || !txt || !SESS) return;
+  if (SESS.remember) {
+    bar.className = 'sessbar keep';
+    txt.textContent = '已登录 · 保持登录中，关闭窗口即退出';
+    return;
+  }
+  const left = Math.max(0, SESS.idleIn - (Date.now() - SESS.at) / 1000);
+  bar.className = 'sessbar' + (left <= 60 ? ' warn' : '');
+  txt.textContent = '已登录 · ' + fmtClock(left) + ' 后自动退出';
+  if (left <= 0) toLogin();
+}
+
+function setSess(session) {
+  if (!session) { SESS = null; return; }
+  SESS = {
+    remember: !!session.remember,
+    idleIn: Number(session.idle_in || 0),
+    at: Date.now()
+  };
+  renderSess();
+  if (!sessTimer) {
+    sessTimer = setInterval(renderSess, 1000);
+    // 从后台恢复时先按服务端校准一次：定时器被浏览器冻结过，
+    // 本地倒计时可能已经和真实 idle 脱节。
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && CSRF) calibrateSess();
+    });
+  }
+  armActivity();
+}
+
+async function calibrateSess() {
+  try {
+    const me = await api('/api/me');
+    if (!me.unlocked) { toLogin(); return; }
+    if (me.session) setSess(me.session);
+  } catch (e) { /* api() 已在 401 时跳登录页 */ }
+}
+
+// 只有「不勾选」档需要真实操作续期。勾选档任何请求都续，绑事件纯属浪费。
+function armActivity() {
+  if (!SESS || SESS.remember || touchBound) return;
+  touchBound = true;
+  ['pointerdown', 'keydown', 'wheel'].forEach(ev =>
+    document.addEventListener(ev, onActivity, {passive: true}));
+}
+
+function onActivity() {
+  if (!SESS || SESS.remember) return;
+  const now = Date.now();
+  if (now - touchAt < TOUCH_GAP) return;
+  touchAt = now;
+  api('/api/session/touch', {method: 'POST', body: '{}'}).then(j => {
+    if (j && typeof j.idle_in === 'number') {
+      SESS.idleIn = j.idle_in;
+      SESS.at = Date.now();
+      renderSess();
+    }
+  }).catch(e => {
+    // 会话已没了就解绑，别再每分钟打一次 401
+    if (String(e.message).indexOf('login_required') >= 0) touchBound = false;
+  });
+}
+
+// 关窗口时给服务端留一句话：pagehide 之后页面就没了，只有 sendBeacon 还发得出去。
+// 服务端**不立刻**删会话——刷新、站内跳转会马上发请求并撤销这个标记；超过宽限
+// （默认 60 秒）仍没有任何请求，才判定「窗口真的关了」并清掉那条记录。
+function armBye() {
+  if (byeBound) return;
+  byeBound = true;
+  window.addEventListener('pagehide', () => {
+    try {
+      const blob = new Blob(['{}'], {type: 'application/json'});
+      if (navigator.sendBeacon && navigator.sendBeacon('/api/session/bye', blob)) return;
+      fetch('/api/session/bye', {
+        method: 'POST', body: '{}', keepalive: true,
+        headers: {'Content-Type': 'application/json'}
+      });
+    } catch (e) { /* 拿不到就算了，靠 idle 到期兜底 */ }
+  });
+}
+
+// ───────────────────── 登录会话卡 ─────────────────────
+const SESS_EVENTS = {
+  login_ok: ['登录成功', ''],
+  logout: ['退出登录', ''],
+  session_revoke: ['被踢下线', 'warn'],
+  session_expired: ['自动退出', 'warn'],
+  session_evict: ['超出上限被淘汰', 'warn'],
+  session_bye: ['关闭窗口退出', 'warn'],
+  session_prune: ['清理离线会话', 'warn']
+};
+
+function fmtTs(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return isNaN(d) ? '' : d.toLocaleString('zh-CN', {hour12: false});
+}
+
+async function loadSessions() {
+  const box = $('sessList');
+  if (!box) return;
+  try {
+    const j = await api('/api/sessions');
+    const rows = j.sessions || [];
+    const online = (j.online != null) ? j.online : rows.filter(r => r.online !== false).length;
+    $('sessCount').textContent = online + ' 在线'
+      + (rows.length > online ? ' · 共 ' + rows.length + ' 条' : '');
+    $('sessCount').className = 'badge ' + (online ? 'ok' : 'warn');
+    const grace = Math.max(1, Math.round((j.bye_grace || 60) / 60));
+    $('sessSub').textContent = '上限 ' + (j.max || 8) + ' 条。关掉窗口约 '
+      + grace + ' 分钟后记录自动消失；不勾选保持登录时，停手 '
+      + Math.round((j.idle || 900) / 60) + ' 分钟自动退出。';
+    const pruneBtn = $('sessPrune');
+    if (pruneBtn) pruneBtn.classList.toggle('hide', rows.length <= online);
+    box.innerHTML = rows.map(r =>
+      '<div class="sess-row' + (r.online === false ? ' off' : '') + '"><div><b>'
+      + esc(r.device) + '</b>'
+      + (r.self ? ' <span class="badge ok">当前</span>' : '')
+      + (r.remember ? ' <span class="badge ok">保持登录</span>' : '')
+      + (r.online === false ? ' <span class="badge">已离线</span>' : '')
+      + '<p class="meta">' + esc(r.ip || '未知地址') + ' · 登录 <span class="nowrap">'
+      + esc(fmtTs(r.created * 1000)) + '</span></p>'
+      + '<p class="meta">最近活动 <span class="nowrap">' + esc(fmtTs(r.last * 1000)) + '</span></p></div>'
+      + (r.self ? '' : '<button class="ghost sess-kick" data-sid="' + esc(r.sid) + '">'
+        + (r.online === false ? '清理' : '踢下线') + '</button>')
+      + '</div>').join('') || '<p class="empty">当前只有这一条会话</p>';
+    const his = (j.history || []).slice().reverse();
+    $('sessHisCount').textContent = his.length ? '(' + his.length + ')' : '';
+    $('sessHistory').innerHTML = his.map(h => {
+      const meta = SESS_EVENTS[h.event] || [h.event, ''];
+      const t = String(h.ts || '').replace('T', ' ').slice(11, 16) || fmtTs(Date.now());
+      return '<div class="sess-his ' + meta[1] + '">' + esc(t) + ' ' + esc(meta[0])
+        + (h.device ? ' · ' + esc(h.device) : '')
+        + (h.ip ? ' · ' + esc(h.ip) : '') + '</div>';
+    }).join('') || '<p class="empty">暂无记录</p>';
+  } catch (e) {
+    box.innerHTML = '<p class="empty">' + esc(e.message) + '</p>';
+  }
+}
+
+async function pruneSess() {
+  try {
+    const j = await api('/api/sessions/prune', {method: 'POST', body: '{}'});
+    toast(j.cleared ? ('已清理 ' + j.cleared + ' 条离线会话') : '没有可清理的会话');
+    loadSessions();
+  } catch (e) { toast(e.message, false); }
+}
+
+async function revokeSess(sid) {
+  try {
+    await api('/api/sessions/revoke', {method: 'POST', body: JSON.stringify({sid})});
+    toast('已踢下线');
+    loadSessions();
+  } catch (e) { toast(e.message, false); }
+}
+
+document.addEventListener('click', (ev) => {
+  const btn = ev.target.closest ? ev.target.closest('.sess-kick') : null;
+  if (!btn) return;
+  if (!btn.dataset.armed) {
+    btn.dataset.armed = '1';
+    btn.dataset.label = btn.textContent;
+    btn.textContent = '确认清理';
+    btn.style.color = 'var(--danger)';
+    setTimeout(() => {
+      if (!btn.dataset.armed) return;
+      delete btn.dataset.armed;
+      btn.textContent = btn.dataset.label || '踢下线';
+      btn.style.color = '';
+    }, 3000);
+    return;
+  }
+  delete btn.dataset.armed;
+  revokeSess(btn.dataset.sid);
+});
+
+function syncTabMask() {
+  const tb = document.querySelector('.top .tabs');
+  if (tb) tb.classList.toggle('is-over', tb.scrollWidth > tb.clientWidth + 6);
+  const sn = document.querySelector('.settings-layout .subnav');
+  if (sn) sn.classList.toggle('is-over', sn.scrollWidth > sn.clientWidth + 6);
+}
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('hide', p.id !== 'tab-' + name));
+  const act = document.querySelector('.tab.active');
+  if (act && act.scrollIntoView) act.scrollIntoView({inline: 'center', block: 'nearest'});
+  syncTabMask();
+  const promo = document.querySelector('.promo');
+  if (promo) promo.style.display = (name === 'profiles') ? '' : 'none';
+  if (typeof pollBadge === 'function' && CSRF) pollBadge();
+  if (name === 'pending') { loadPending(); loadHistory(); }
+  if (name === 'profiles') loadProfiles();
+  if (name === 'services') loadServices();
+  if (name === 'skill') { loadAgents(); loadSkillAgents(); }
+  if (name === 'settings') {
+    loadSettings(); loadTlsStatus();
+    switchSettings('account');
+  }
+}
+function switchSettings(name) {
+  document.querySelectorAll('.subtab').forEach(b => b.classList.toggle('active', b.dataset.settings === name));
+  document.querySelectorAll('.settings-page').forEach(p => p.classList.toggle('hide', p.id !== 'set-' + name));
+  if (name === 'account') { loadSecRules(); loadSessions(); }
+  if (name === 'notify') loadNotify();
+  if (name === 'network') { loadAddresses(); loadTlsStatus(); }
+}
+document.querySelectorAll('.tab').forEach(b => b.onclick = () => switchTab(b.dataset.tab));
+window.addEventListener('resize', syncTabMask);
+document.querySelectorAll('.subtab').forEach(b => b.onclick = () => switchSettings(b.dataset.settings));
+
+async function loadMe() {
+  try {
+    const j = await api('/api/me');
+    const who = j.username || 'admin';
+    $('deviceName').textContent = who;
+    if ($('adminName')) $('adminName').textContent = who;
+    CSRF = j.csrf || '';
+    // 域名一律由后端给，前端不写字面量（REQ-141）
+    DEFAULT_DOMAIN = j.default_domain || DEFAULT_DOMAIN;
+    if ($('certDomain') && !$('certDomain').value) {
+      $('certDomain').value = DEFAULT_DOMAIN;
+    }
+    if ($('dnsDomain')) $('dnsDomain').textContent = DEFAULT_DOMAIN;
+  } catch (e) { $('deviceName').textContent = '未登录'; }
+}
+
+let apprTimer = null;
+let lastApprCount = -1;
+function jumpToPending() {
+  const btn = document.querySelector('.tab[data-tab="pending"]');
+  if (btn) btn.click();
+  const first = document.querySelector('#pendingList .card');
+  if (first) first.scrollIntoView({behavior: 'smooth', block: 'center'});
+}
+async function pollBadge() {
+  try {
+    const j = await api('/api/pending');
+    const p = j.pending;
+    const n = p ? (p.queue || 1) : 0;
+    const badge = $('apprBadge');
+    if (!badge) return;
+    const onPendingTab = !document.getElementById('tab-pending').classList.contains('hide');
+    const tabBtn = document.querySelector('.tab[data-tab="pending"]');
+    if (tabBtn) {
+      tabBtn.dataset.count = String(n);
+      tabBtn.classList.toggle('has-new', n > 0 && !onPendingTab);
+    }
+    if (n > 0 && !onPendingTab) {
+      badge.classList.remove('hide');
+      $('apprCount').textContent = String(n);
+      // 最早那条等待超过一半时限就把数字转红：再拖就要超时自动拒绝了。
+      // waiting_s / timeout_s 都是 /api/pending 现成返回的，不需要额外接口。
+      const half = p && p.timeout_s > 0 && (p.waiting_s / p.timeout_s) >= 0.5;
+      $('apprCount').className = 'badge ' + (half ? 'ng' : 'warn');
+      document.title = '(' + n + ') 待审批 · AgentKeyGuard';
+      if (lastApprCount >= 0 && n > lastApprCount) {
+        toast('有新的审批请求 · ' + n + ' 条待处理');
+      }
+    } else {
+      badge.classList.add('hide');
+      document.title = 'AgentKeyGuard';
+    }
+    lastApprCount = n;
+  } catch (e) { /* 轮询失败不打扰用户 */ }
+}
+function startBadgePoll() {
+  if (apprTimer) return;
+  const tick = () => pollBadge();
+  tick();
+  apprTimer = setInterval(tick, document.hidden ? 10000 : 3000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) tick();
+  });
+}
+// 分组缓存：按钮只传下标，避免把 request_id 列表拼进 onclick 字符串
+let PENDING_GROUPS = [];
+
+async function loadSideStats() {
+  try {
+    const j = await api('/api/security/rules');
+    const blocked = j.blocked || j.rules || [];
+    const dangerous = j.dangerous || [];
+    const custom = blocked.concat(dangerous).filter(r => r.custom).length;
+    if ($('m403')) $('m403').textContent = blocked.length;
+    if ($('m428')) $('m428').textContent = dangerous.length;
+    if ($('mCustom')) $('mCustom').textContent = custom;
+  } catch (e) { /* 侧栏数字拿不到不阻断主流程 */ }
+}
+async function loadPending() {
+  try {
+    const j = await api('/api/pending');
+    const gs = j.groups || [];
+    const p = j.pending;
+    PENDING_GROUPS = gs;
+    if ($('statPending')) $('statPending').textContent = p ? (p.queue || 1) : 0;
+    if ($('pendingHint')) $('pendingHint').textContent =
+      gs.length ? (gs.length + ' 组待处理 · 按签名合并') : '等待 Agent 请求';
+    if (!gs.length) {
+      $('pendingList').innerHTML = '<p class="empty">暂无待审批请求</p>';
+      loadEnvPending();          // 环境变量授权并入同一容器（REQ-121）
+      return;
+    }
+    // 最多铺 3 组：再多就一行提示，别让一屏塞满卡片
+    const shown = gs.slice(0, 3);
+    const more = gs.length - shown.length;
+    $('pendingList').innerHTML = shown.map((g, i) => {
+      const p0 = g.first;
+      const danger = p0.dangerous
+        ? '<div class="danger">🚨 高危操作 · ' + (p0.reflection_off ? '本条规则已关闭自审，仍在此等你拍板' : '已要求 Agent 自我反思') + '</div>'
+        : '';
+      const refl = p0.self_reflection
+        ? '<div class="reflect"><b>Agent 的自我反思</b><p>' + esc(p0.self_reflection) + '</p></div>'
+        : (p0.dangerous && p0.reflection_off
+            ? '<div class="reflect"><b>自审已关闭</b><p>这条规则在「灵魂三问」里被关掉了自审，没有反思原文。审批闸门仍然有效。</p></div>'
+            : '');
+      const who = p0.agent ? '<span class="badge ok">' + esc(p0.agent) + '</span>' : '';
+      const cnt = g.count > 1 ? '<span class="badge warn">×' + g.count + '</span>' : '';
+      const okBtn = g.count > 1
+        ? '<button class="ok" onclick="decideGroup(' + i + ',\'yes\')">批准全部 ' + g.count + ' 条</button>'
+        : '<button class="ok" onclick="decide(\'' + esc(p0.request_id) + '\',\'yes\')">同意</button>';
+      const noBtn = g.count > 1
+        ? '<button class="danger-btn" onclick="decideGroup(' + i + ',\'no\')">全部拒绝</button>'
+        : '<button class="danger-btn" onclick="openDeny(\'' + esc(p0.request_id) + '\')">拒绝</button>';
+      return '<article class="card">' +
+        '<div class="card-top"><span class="badge warn">待审批</span><h3>' + esc(p0.title || p0.kind) + '</h3>' + who + cnt +
+        '<span class="badge">' + esc(p0.kind) + ' → ' + esc(p0.profile) + '</span></div>' +
+        danger + refl +
+        '<p class="meta" style="margin-top:9px">目标：<span class="nowrap">' + esc(p0.target) + '</span> · 请求码 <code>' + esc(p0.code) + '</code> · 来源 <span class="nowrap">' + esc(p0.source) + '</span></p>' +
+        '<div class="cmd-wrap"><pre>' + esc(p0.detail || '') + '</pre>' +
+        '<button class="ghost" onclick="copyPendCmd(' + i + ')">复制</button></div>' +
+        '<div class="row row-acts" style="margin-top:12px">' +
+        '<button class="ghost" style="flex:0 0 auto" onclick="openDetail(' + i + ')">查看详情</button>' +
+        '<div class="acts-r">' + noBtn + okBtn + '</div></div></article>';
+    }).join('') + (more > 0 ? '<p class="meta">还有 ' + more + ' 组待处理</p>' : '');
+    loadEnvPending();
+  } catch (e) { $('pendingList').innerHTML = '<p class="empty">' + esc(e.message) + '</p>'; }
+}
+
+let DETAIL_I = -1;
+function closeDetail() {
+  const m = $('detailMask');
+  if (m) m.classList.remove('on');
+  DETAIL_I = -1;
+}
+function openDetail(i) {
+  const g = PENDING_GROUPS[i];
+  if (!g || !g.first) return;
+  DETAIL_I = i;
+  const p0 = g.first;
+  const esc0 = esc;
+  $('dSub').textContent = (p0.agent ? p0.agent + ' · ' : '') + (g.count > 1 ? '共 ' + g.count + ' 条' : '单条请求');
+  const danger = p0.dangerous
+    ? '<div class="danger">🚨 高危操作 · ' + (p0.reflection_off ? '本条规则已关闭自审' : '已要求 Agent 自我反思') + '</div>'
+    : '';
+  const rf = p0.self_reflection
+    ? '<div class="reflect"><b>Agent 的自我反思</b><p>' + esc0(p0.self_reflection) + '</p></div>'
+    : '';
+  $('dBody').innerHTML =
+    '<h2>' + esc0(p0.title || p0.kind) + '</h2>' +
+    '<p class="meta">请求已挂起，等你拍板；超时自动拒绝。</p>' +
+    danger + rf +
+    '<div class="drow"><span class="k">类型</span><span class="v">' + esc0(p0.kind) + ' → ' + esc0(p0.profile) + '</span></div>' +
+    '<div class="drow"><span class="k">目标</span><span class="v">' + esc0(p0.target) + '</span></div>' +
+    '<div class="drow"><span class="k">请求码</span><span class="v"><code>' + esc0(p0.code) + '</code> · 来源 ' + esc0(p0.source) + '</span></div>' +
+    '<div class="drow" style="border-bottom:0"><span class="k">命令</span></div>' +
+    '<div class="cmd-wrap" style="margin-top:2px"><pre>' + esc0(p0.detail || '') + '</pre>' +
+    '<button class="ghost" onclick="copyPendCmd(' + i + ')">复制</button></div>';
+  const okBtn = g.count > 1
+    ? '<button class="ok" onclick="closeDetail();decideGroup(' + i + ',\'yes\')">批准全部 ' + g.count + ' 条</button>'
+    : '<button class="ok" onclick="closeDetail();decide(\'' + esc0(p0.request_id) + '\',\'yes\')">同意</button>';
+  const noBtn = g.count > 1
+    ? '<button class="danger-btn" onclick="closeDetail();decideGroup(' + i + ',\'no\')">全部拒绝</button>'
+    : '<button class="danger-btn" onclick="closeDetail();openDeny(\'' + esc0(p0.request_id) + '\')">拒绝</button>';
+  $('dFoot').innerHTML = noBtn + okBtn;
+  $('detailMask').classList.add('on');
+}
+function copyPendCmd(i) {
+  const g = PENDING_GROUPS[i];
+  if (!g || !g.first) return;
+  const txt = g.first.detail || '';
+  const done = () => toast('已复制命令');
+  if (navigator.clipboard && txt) navigator.clipboard.writeText(txt).then(done).catch(() => {});
+}
+async function decideGroup(i, dec) {
+  const g = PENDING_GROUPS[i];
+  if (!g) return;
+  try {
+    await api('/api/approve', {method: 'POST',
+      body: JSON.stringify({request_ids: g.rids, decision: dec})});
+    toast(dec === 'yes' ? ('已批准 ' + g.count + ' 条') : ('已拒绝 ' + g.count + ' 条'));
+    loadPending(); loadHistory();
+  } catch (e) { toast(e.message, false); }
+}
+
+let denyId = '';
+function openDeny(id) { denyId = id; $('denyReason').value = ''; $('denyModal').classList.remove('hide'); }
+function closeDeny() { $('denyModal').classList.add('hide'); denyId = ''; }
+async function decide(id, decision, reason) {
+  try {
+    await api('/api/approve', {method: 'POST',
+      body: JSON.stringify({request_id: id, decision: decision, reason: reason || ''})});
+    toast(decision === 'yes' ? '已同意' : '已拒绝');
+    closeDeny(); loadPending(); loadHistory();
+  } catch (e) { toast(e.message, false); }
+}
+function confirmDeny() { if (denyId) decide(denyId, 'no', $('denyReason').value.trim()); }
+
+async function loadHistory() {
+  try {
+    const j = await api('/api/history');
+    const h = j.history || [];
+    if ($('histCount')) $('histCount').textContent = h.length ? (h.length + ' 条') : '暂无';
+    $('historyList').innerHTML = h.length ? h.map(x => {
+      const ok = x.decision === 'yes';
+      // 历史里也带上会话签名，回看时知道是哪一条密钥干的
+      const who = x.agent ? '[' + esc(x.agent) + '] ' : '';
+      const when = x.decided_at
+        ? new Date(x.decided_at * 1000).toLocaleString() : '';
+      // 命令原文是审批时的核心证据：以前点不开，出问题只能翻审计日志
+      const body = x.detail
+        ? '<pre class="codebox" style="margin-top:8px;white-space:pre-wrap;word-break:break-all">' +
+          esc(x.detail) + '</pre>'
+        : '<p class="meta" style="margin-top:8px">（这次没有记录命令内容）</p>';
+      return '<details class="item">' +
+        '<summary style="cursor:pointer">' +
+          '<b>' + who + esc(x.title || x.kind) + '</b>' +
+          '<span class="badge ' + (ok ? 'ok' : 'ng') + '" style="margin:0 8px">' +
+            (ok ? '已同意' : '已拒绝') + '</span>' +
+          '<span class="meta">' + esc(x.profile || '') + (when ? ' · <span class="nowrap">' + esc(when) + '</span>' : '') + '</span>' +
+        '</summary>' +
+        body +
+        '<p class="meta">请求码 ' + esc(x.code || '——') +
+          ' · 来源 ' + esc(x.source || '——') +
+          (x.reason ? ' · 原因：' + esc(x.reason) : '') + '</p>' +
+        '</details>';
+    }).join('') : '<p class="empty">暂无历史</p>';
+    const recent = $('recentList');
+    if (recent) {
+      recent.innerHTML = h.length ? h.slice(0, 5).map(x => {
+        const ok = x.decision === 'yes';
+        const tt = x.decided_at
+          ? new Date(x.decided_at * 1000).toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit'})
+          : '';
+        return '<div class="mini"><span class="badge ' + (ok ? 'ok' : 'ng') + '">' +
+          (ok ? '通过' : '拒绝') + '</span><span class="g">' +
+          esc(x.title || x.kind || '') + '</span><span class="t">' + esc(tt) + '</span></div>';
+      }).join('') : '<p class="empty" style="padding:22px 0">暂无记录</p>';
+    }
+  } catch (e) { $('historyList').innerHTML = '<p class="empty">' + esc(e.message) + '</p>'; }
+}
+async function clearHistory() {
+  try { await api('/api/history/clear', {method: 'POST', body: '{}'}); toast('已清空'); loadHistory(); }
+  catch (e) { toast(e.message, false); }
+}
+
+function profileBody() {
+  const t = $('pfType').value;
+  const common = {name: $('pfName').value.trim(), type: t};
+  if (t === 'pg') {
+    return {...common, host: $('pfHost').value.trim(),
+      port: parseInt($('pfPort').value || '5432', 10),
+      user: $('pfUser').value.trim(), password: $('pfPassword').value,
+      database: $('pfDb').value.trim(), readonly: $('pfReadonly').checked,
+      sslmode: $('pfSsl').value, mock: false};
+  }
+  if (t === 'ssh') {
+    return {...common, host: $('pfHostSsh').value.trim(),
+      port: parseInt($('pfPortSsh').value || '22', 10),
+      user: $('pfUserSsh').value.trim(), password: $('pfPasswordSsh').value,
+      private_key: $('pfKey').value.trim(), hostkey: $('pfHostkey').value.trim(),
+      sudo: $('pfSudo').value, mock: false};
+  }
+  if (t === 'git') {
+    // 只有三条：站点、用户名、Token。仓库地址由 Agent 请求时带
+    return {...common, base: $('pfGitBase').value.trim(),
+      user: $('pfGitUser').value.trim(),
+      token: $('pfGitToken').value.trim()};
+  }
+  if (t === 'mysql') {
+    return {...common, host: $('pfHostMysql').value.trim(),
+      port: parseInt($('pfPortMysql').value || '3306', 10),
+      user: $('pfUserMysql').value.trim(), password: $('pfPasswordMysql').value,
+      database: $('pfDbMysql').value.trim(), readonly: $('pfReadonlyMysql').checked,
+      sslmode: $('pfSslMysql').value, mock: false};
+  }
+  if (t === 'redis') {
+    return {...common, host: $('pfHostRedis').value.trim(),
+      port: parseInt($('pfPortRedis').value || '6379', 10),
+      password: $('pfPasswordRedis').value,
+      db: parseInt($('pfDbRedis').value || '0', 10),
+      readonly: $('pfReadonlyRedis').checked};
+  }
+  // 走到这里说明下拉里出现了没有对应表单的类型（正常不该发生），
+  // 直接报错，比静默提交一个残缺 profile 好
+  throw new Error('未知的凭证类型：' + t);
+}
+function trashSvg() {
+  return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M4 7h16M9 7V5h6v2M6.5 7l1 13h9l1-13"/></svg>';
+}
+function eyeSvg(open) {
+  return open
+    ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="2.6"/></svg>'
+    : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3l18 18"/><path d="M10.6 6.3A10.9 10.9 0 0112 6c6.5 0 10 6 10 6a17.6 17.6 0 01-3.1 3.7"/><path d="M6.1 6.5A17.2 17.2 0 002 12s3.5 6 10 6c1.2 0 2.3-.2 3.3-.6"/></svg>';
+}
+async function loadProfiles() {
+  try {
+    const j = await api('/api/profiles');
+    const ps = j.profiles || [];
+    if ($('statProfiles')) $('statProfiles').textContent = ps.length;
+    $('profileList').innerHTML = ps.length ? ps.map(p => {
+      const rows = (p.type === 'git'
+        ? [['站点', p.base || ''], ['用户', p.user || '']]
+        : [['主机', (p.host || p.url || '') + (p.port ? ':' + p.port : '')],
+           ['账号', p.user || ''], ['默认库', p.database || ''],
+           ['权限', p.readonly ? '只读会话' : '读写']])
+        .filter(r => r[1]);
+      const eye = (p.secrets || []).length
+        ? '<button class="iconbtn" title="查看密钥" onclick="revealProfile(\'' + esc(p.name) + '\')">' + eyeSvg(false) + '</button>'
+        : '';
+      return '<article class="cred">' +
+        '<div class="cred-head"><span class="kind">' + esc(p.type) + '</span><b>' + esc(p.name) + '</b>' +
+        '<div class="cred-acts">' + eye +
+        '<button class="iconbtn iconbtn-danger" title="删除" onclick="deleteProfile(\'' + esc(p.name) + '\')">' + trashSvg() + '</button>' +
+        '</div></div>' +
+        '<div class="cred-body">' + rows.map(r =>
+          '<div class="kv"><span class="k">' + r[0] + '</span><span class="v">' + esc(String(r[1])) + '</span></div>'
+        ).join('') + '</div>' +
+        '<div class="secret hide" id="sec-' + esc(p.name) + '"></div></article>';
+    }).join('')
+      : '<p class="empty">暂无凭证</p>';
+  } catch (e) { $('profileList').innerHTML = '<p class="empty">' + esc(e.message) + '</p>'; }
+}
+function toggleProfileForm(force) {
+  // REQ-115：按钮同时是展开与收起。force=false 表示程序化收起（保存后调）。
+  const form = $('profileForm');
+  const open = (force === undefined) ? form.classList.contains('hide') : !!force;
+  form.classList.toggle('hide', !open);
+  const btn = $('pfToggle');
+  if (btn) btn.textContent = open ? '收起 ▴' : '＋ 添加凭证';
+  if (open && form.scrollIntoView) form.scrollIntoView({block: 'nearest', behavior: 'smooth'});
+}
+function setPfType(t, el) {
+  const sel = $('pfType');
+  if (!sel) return;
+  sel.value = t;
+  document.querySelectorAll('#pfTypes span').forEach(x => x.classList.toggle('on', x === el));
+  syncProfileType();
+}
+function syncProfileType() {
+  const t = $('pfType').value;
+  document.querySelectorAll('#profileForm [data-type]').forEach(el => {
+    el.classList.toggle('hide', el.dataset.type !== t);
+  });
+  if ($('pfPort')) $('pfPort').value = t === 'pg' ? '5432' : '22';
+  if ($('pfPortSsh')) $('pfPortSsh').value = '22';
+}
+async function saveProfile() {
+  const body = profileBody();
+  if (!body.name) return toast('请填写名称', false);
+  try {
+    await api('/api/profiles', {method: 'POST', body: JSON.stringify(body)});
+    toast('已保存');
+    ['pfName', 'pfPassword', 'pfPasswordSsh', 'pfKey',
+     'pfPasswordMysql', 'pfPasswordRedis',
+     'pfGitToken', 'pfGitTestUrl']
+      .forEach(id => { if ($(id)) $(id).value = ''; });
+    toggleProfileForm(false);          // 保存后自动收回，不再占着屏幕
+    loadProfiles();
+  } catch (e) { toast(e.message, false); }
+}
+async function testProfile() {
+  const body = profileBody();
+  if (body.type === 'git') {
+    // 仓库地址只用于这次 ls-remote，不随凭证保存
+    const u = ($('pfGitTestUrl') ? $('pfGitTestUrl').value.trim() : '');
+    if (!u) {
+      $('testResult').textContent = 'git 凭证请先填「仓库地址（仅测试用）」再测';
+      return;
+    }
+    body.url = u;
+  }
+  $('testResult').textContent = '测试中…';
+  try {
+    const j = await api('/api/profiles/test', {method: 'POST', body: JSON.stringify(body)});
+    $('testResult').textContent = j.ok
+      ? ('连接成功 · ' + j.elapsed_ms + ' ms')
+      : ('连接失败 · ' + (j.error || 'unknown'));
+  } catch (e) { $('testResult').textContent = '测试失败：' + e.message; }
+}
+let revealName = '';
+function revealProfile(name) {
+  revealName = name;
+  $('rvTOTP').value = '';
+  document.querySelectorAll('.rv-cell').forEach(c => { c.value = ''; });
+  $('revealModal').classList.remove('hide');
+  const first = document.querySelector('.rv-cell');
+  if (first) first.focus();
+}
+(function () {
+  const cells = Array.prototype.slice.call(document.querySelectorAll('.rv-cell'));
+  cells.forEach((c, i) => {
+    c.addEventListener('input', () => {
+      c.value = String(c.value || '').replace(/\D/g, '').slice(-1);
+      if (c.value && i < cells.length - 1) cells[i + 1].focus();
+      syncRv();
+    });
+    c.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !c.value && i > 0) {
+        cells[i - 1].value = ''; cells[i - 1].focus(); syncRv(); e.preventDefault();
+      }
+    });
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDetail(); });
+})();
+function syncRv() {
+  const cells = Array.prototype.slice.call(document.querySelectorAll('.rv-cell'));
+  const v = cells.map(c => c.value).join('');
+  const hid = $('rvTOTP');
+  if (hid) hid.value = v;
+}
+function closeReveal() { $('revealModal').classList.add('hide'); revealName = ''; }
+async function doReveal() {
+  const name = revealName;
+  try {
+    const j = await api('/api/profiles/reveal', {method: 'POST', body: JSON.stringify({
+      name, totp: $('rvTOTP').value.replace(/\D/g, '')})});
+    const box = $('sec-' + name);
+    const lines = Object.entries(j.secrets || {}).map(([k, v]) =>
+      '<div><b>' + esc(k) + '</b>: <code>' + esc(v) + '</code></div>').join('')
+      || '<div class="meta">这条凭证没有可查看的密钥</div>';
+    if (box) {
+      box.innerHTML = lines;
+      box.classList.remove('hide');
+      setTimeout(() => { box.innerHTML = ''; box.classList.add('hide'); }, 15000);
+    }
+    toast('已显示，15 秒后自动隐藏');
+    closeReveal();
+  } catch (e) { toast(e.message, false); }
+}
+async function deleteProfile(name) {
+  try { await api('/api/profiles/delete', {method: 'POST', body: JSON.stringify({name})});
+    toast('已删除'); loadProfiles(); } catch (e) { toast(e.message, false); }
+}
+
+async function loadSettings() {
+  try {
+    const j = await api('/api/settings');
+    const s = j.settings || {};
+    $('stBark').value = s.bark || '';
+    $('stBase').value = s.public_base || '';
+    $('stTimeout').value = s.approval_timeout || 300;
+  } catch (e) { toast(e.message, false); }
+}
+async function saveSettings() {
+  try {
+    const payload = {
+      bark: $('stBark').value.trim(), public_base: $('stBase').value.trim(),
+      approval_timeout: parseInt($('stTimeout').value || '300', 10)};
+    const j = await api('/api/settings', {method: 'POST', body: JSON.stringify(payload)});
+    if (j.tls && j.tls.ok === false) {
+      toast('已保存，但证书换发失败：' + (j.tls.error || '未知原因'), false);
+    } else if (j.tls && j.tls.ok) {
+      toast('已保存，证书已按新地址换发');
+      loadTlsStatus();
+    } else {
+      toast('已保存');
+    }
+  } catch (e) { toast(e.message, false); }
+}
+
+// ── Webhook 通知渠道（REQ-148）──
+const NOTIFY_PRESET_CN = {custom: '自定义', dingtalk: '钉钉', feishu: '飞书',
+  wecom: '企业微信', slack: 'Slack', telegram: 'Telegram',
+  ntfy: 'ntfy', gotify: 'Gotify'};
+async function loadNotify() {
+  try {
+    const j = await api('/api/notify', {method: 'POST', body: JSON.stringify({action: 'list'})});
+    const cs = j.channels || [];
+    // Bark 与 webhook 渠道同权：都能开关。老接口没返回 bark_enabled 时默认启用
+    updateBarkToggle(j.bark_enabled !== false);
+    const box = $('notifyList');
+    if (!box) return;
+    if (!cs.length) {
+      box.innerHTML = '<p class="empty">还没有 Webhook 渠道。安卓用户建议加一条 ntfy。</p>';
+      return;
+    }
+    box.innerHTML = cs.map(c => {
+      const presetCn = NOTIFY_PRESET_CN[c.preset] || c.preset;
+      const toggle = c.enabled
+        ? '<button class="ghost" style="flex:0 0 auto" onclick="toggleNotify(\'' +
+          esc(c.name) + '\',false)">停用</button>'
+        : '<button class="ok" style="flex:0 0 auto" onclick="toggleNotify(\'' +
+          esc(c.name) + '\',true)">启用</button>';
+      return '<div class="item"><div class="row" style="justify-content:space-between;align-items:center">' +
+        '<b>' + esc(c.name) + '</b><span class="badge ' + (c.enabled ? 'ok' : '') + '">' +
+        esc(presetCn) + (c.enabled ? ' · 已启用' : ' · 已停用') + '</span></div>' +
+        '<p class="meta" style="word-break:break-all">' + esc(c.url || '') +
+        (c.has_secret ? ' · 已配密钥' : '') + '</p>' +
+        '<div class="row" style="margin-top:8px">' + toggle +
+        '<button class="danger-btn" style="flex:0 0 auto" onclick="deleteNotify(\'' +
+        esc(c.name) + '\', this)">删除</button></div></div>';
+    }).join('');
+  } catch (e) {
+    if ($('notifyList')) $('notifyList').innerHTML = '<p class="empty">' + esc(e.message) + '</p>';
+  }
+}
+function updateBarkToggle(enabled) {
+  const btn = $('barkToggle');
+  if (!btn) return;
+  btn.textContent = enabled ? '停用' : '启用';
+  btn.className = enabled ? 'ghost' : 'ok';
+}
+async function toggleBark() {
+  const btn = $('barkToggle');
+  if (!btn) return;
+  const enabling = btn.textContent === '启用';
+  try {
+    await api('/api/notify', {method: 'POST',
+      body: JSON.stringify({action: 'toggle', name: 'bark', enabled: enabling})});
+    toast(enabling ? '已启用 Bark 通知' : '已停用 Bark 通知');
+    loadNotify();
+  } catch (e) { toast(e.message, false); }
+}
+async function saveNotify() {
+  const name = ($('ntName') || {}).value.trim();
+  const url = ($('ntUrl') || {}).value.trim();
+  if (!name) { toast('请填渠道名', false); return; }
+  if (!url) { toast('请填地址', false); return; }
+  try {
+    await api('/api/notify', {method: 'POST', body: JSON.stringify({
+      action: 'save', name: name, url: url,
+      preset: ($('ntPreset') || {}).value, secret: ($('ntSecret') || {}).value.trim()})});
+    toast('已保存渠道「' + name + '」');
+    if ($('ntName')) $('ntName').value = '';
+    if ($('ntUrl')) $('ntUrl').value = '';
+    if ($('ntSecret')) $('ntSecret').value = '';
+    loadNotify();
+  } catch (e) { toast(e.message, false); }
+}
+async function toggleNotify(name, enabled) {
+  try {
+    await api('/api/notify', {method: 'POST',
+      body: JSON.stringify({action: 'toggle', name: name, enabled: enabled})});
+    toast(enabled ? '已启用「' + name + '」' : '已停用「' + name + '」');
+    loadNotify();
+  } catch (e) { toast(e.message, false); }
+}
+async function deleteNotify(name, btn) {
+  // 二次点击确认：删除不可撤销，避免手滑
+  if (btn && btn.dataset.armed !== '1') {
+    btn.dataset.armed = '1';
+    btn.textContent = '再点一次确认';
+    setTimeout(() => { btn.dataset.armed = '0'; btn.textContent = '删除'; }, 4000);
+    return;
+  }
+  try {
+    await api('/api/notify', {method: 'POST',
+      body: JSON.stringify({action: 'delete', name: name})});
+    toast('已删除「' + name + '」');
+    loadNotify();
+  } catch (e) { toast(e.message, false); }
+}
+async function testBark() {
+  const box = $('stBarkResult');
+  if (box) box.textContent = '发送中…';
+  try {
+    const j = await api('/api/bark/test', {method: 'POST',
+      body: JSON.stringify({bark: $('stBark').value.trim()})});
+    if (j.ok) { box.textContent = '已发送，请查看手机'; toast('测试推送已发送'); }
+    else { box.textContent = '发送失败：' + (j.error || '未知原因'); toast('测试推送失败', false); }
+  } catch (e) { if (box) box.textContent = '发送失败：' + e.message; toast(e.message, false); }
+}
+async function loadAddresses() {
+  const box = $('addrList');
+  if (!box) return;
+  try {
+    const j = await api('/api/network/addresses');
+    const items = j.items || [];
+    box.innerHTML = items.map(it => {
+      // 域名是「备选入口」，既不标手机可用也不标仅本机，单独给一个中性标签
+      const badge = it.kind === 'domain'
+        ? '<span class="badge">域名</span>'
+        : '<span class="badge ' + (it.phone ? 'ok' : '') + '">' +
+          (it.phone ? '手机可用' : '仅本机') + '</span>';
+      return '<div class="item"><div class="row" style="justify-content:space-between;align-items:center">' +
+        '<code>' + esc(it.url) + '</code>' + badge + '</div>' +
+        '<p class="meta">' + esc(it.label) + ' · ' + esc(it.note || '') + '</p></div>';
+    }).join('')
+      || '<p class="empty">没有探测到可用地址</p>';
+    const eff = $('addrEffective');
+    if (eff) eff.textContent = j.effective || '—';
+    const w = $('addrWarn');
+    if (w) w.textContent = (j.runtime && j.runtime.warning) || '';
+    const nd = $('addrNotice');
+    if (nd) nd.textContent = (j.runtime && j.runtime.notice) || '';
+  } catch (e) { box.innerHTML = '<p class="empty">' + esc(e.message) + '</p>'; }
+}
+async function loadTlsStatus() {
+  try {
+    const j = await api('/api/tls/status');
+    if ($('caFingerprint')) $('caFingerprint').textContent = j.ca_fingerprint || '未生成';
+    if ($('caSan')) $('caSan').textContent = (j.san || []).join(', ') || '—';
+    if ($('caHost')) $('caHost').textContent = j.host || location.host;
+  } catch (e) { /* 证书还没生成时静默 */ }
+}
+
+async function loadServices() {
+  try {
+    const j = await api('/api/services');
+    const ss = j.services || [];
+    $('serviceList').innerHTML = ss.length ? ss.map(s => {
+        const keys = (s.env_keys || []).map(k =>
+          '<span class="keychip">' + esc(k) +
+          ' <a href="javascript:;" title="删除这个键值对" ' +
+          'onclick="delEnvKey(\'' + esc(s.id) + '\',\'' + esc(k) + '\')">×</a></span>').join('');
+        const badge = s.revoked
+          ? '<span class="badge ng">已撤销</span>'
+          : (s.builtin ? '<span class="badge">留档</span>' : '<span class="badge ok">有效</span>');
+        return '<article class="card svc">' +
+          '<div class="card-top"><b>' + esc(s.name) + '</b>' + badge +
+          '<div class="svc-acts">' +
+          (s.revoked || s.builtin ? '' :
+            '<button class="ghost danger-text" onclick="revokeService(\'' + esc(s.id) + '\')">撤销</button>') +
+          '<button class="ghost danger-text" onclick="openDelSvc(\'' + esc(s.id) + '\',\'' +
+            esc(s.name).replace(/'/g, "\\'") + '\')">删除</button>' +
+          '</div></div>' +
+          '<p class="meta" style="margin-top:8px">注入键值</p>' +
+          '<div class="keychips">' + (keys || '<span class="meta">—</span>') + '</div>' +
+          '<p class="meta" style="margin-top:10px">创建于 ' + esc(s.created || '') + '</p>' +
+          '</article>';
+      }).join('')
+      : '<p class="empty">暂无服务</p>';
+  } catch (e) { $('serviceList').innerHTML = '<p class="empty">' + esc(e.message) + '</p>'; }
+}
+async function delEnvKey(id, key) {
+  openDelEnv(id, key);
+}
+let delEnvId = '', delEnvKeyName = '';
+function openDelEnv(id, key) {
+  delEnvId = id; delEnvKeyName = key;
+  $('delEnvKeyName').textContent = key;
+  $('delEnvModal').classList.remove('hide');
+}
+function closeDelEnv() {
+  $('delEnvModal').classList.add('hide');
+  delEnvId = ''; delEnvKeyName = '';
+}
+async function doDeleteEnvKey() {
+  if (!delEnvId || !delEnvKeyName) return;
+  const key = delEnvKeyName;
+  try {
+    await api('/api/services/env/delete', {method: 'POST',
+      body: JSON.stringify({id: delEnvId, key: key})});
+    closeDelEnv(); toast('已删除 ' + key); loadServices();
+  } catch (e) { toast(e.message, false); }
+}
+// ── 环境变量录入（REQ-118）──────────────────────────────────
+// 整段粘贴自动识别：锚点是「全大写变量名」，分隔符接受 = : 空白 制表符；
+// 值去首尾空白并去引号，识别不出的行单独列出，提交前统一校验。
+const ENV_KEY_RE = /^[A-Za-z_][A-Za-z0-9_]{0,63}$/;
+const ENV_MAX_VALUE = 4096;
+let envRows = [];
+let envUnknown = [];
+
+function envUnquote(v) {
+  const s = String(v ?? '').trim();
+  if (s.length >= 2 && (s[0] === '"' || s[0] === "'") && s[s.length - 1] === s[0]) return s.slice(1, -1).trim();
+  return s;
+}
+function parseEnvText(text) {
+  const rows = [], unknown = [];
+  for (const raw of String(text || '').split('\n')) {
+    let line = raw.replace(/^[\s\-*]+/, '').trim();
+    if (!line || line.startsWith('#')) continue;
+    line = line.replace(/^export\s+/i, '');
+    const m = line.match(/^([A-Z][A-Z0-9_]{0,63})\s*[=:]\s*(.*)$/)
+           || line.match(/^([A-Z][A-Z0-9_]{0,63})[ \t]+(.+)$/);
+    if (!m) { unknown.push(raw.trim()); continue; }
+    const value = envUnquote(m[2]);
+    rows.push({key: m[1], value, warn: value ? [] : ['值为空']});
+  }
+  return {rows, unknown};
+}
+function renderEnvRows() {
+  const box = $('envRows');
+  if (box) {
+    box.innerHTML = envRows.length ? envRows.map((r, i) =>
+      '<div class="row" style="gap:8px;align-items:stretch;margin-top:6px">' +
+      '<input value="' + esc(r.key) + '" placeholder="KEY" style="flex:0 0 36%"' +
+      ' oninput="editEnvRow(' + i + ',\'key\',this.value)">' +
+      '<input value="' + esc(r.value) + '" placeholder="value" style="flex:1"' +
+      ' oninput="editEnvRow(' + i + ',\'value\',this.value)">' +
+      '<button class="ghost danger-text" type="button" style="width:auto;padding:0 10px"' +
+      ' onclick="delEnvRow(' + i + ')">✕</button></div>' +
+      ((r.warn && r.warn.length) ? '<p class="meta" style="color:#ffb86b">第 ' + (i + 1) +
+        ' 行：' + esc(r.warn.join('；')) + '</p>' : '')).join('')
+      : '<p class="empty">还没有变量</p>';
+  }
+  const ub = $('envUnknown');
+  if (ub) {
+    if (envUnknown.length) {
+      ub.classList.remove('hide');
+      ub.innerHTML = '<p class="meta" style="color:#ffb86b">以下内容识别不出变量名，未导入：</p>' +
+        envUnknown.map(l => '<p class="meta"><code>' + esc(l) + '</code></p>').join('');
+    } else { ub.classList.add('hide'); ub.innerHTML = ''; }
+  }
+}
+function editEnvRow(i, field, val) { if (envRows[i]) envRows[i][field] = val; }
+function addEnvRow() { envRows.push({key: '', value: '', warn: []}); renderEnvRows(); }
+function delEnvRow(i) { envRows.splice(i, 1); renderEnvRows(); }
+function clearEnvRows() {
+  envRows = []; envUnknown = [];
+  if ($('svcEnv')) $('svcEnv').value = '';
+  if ($('envError')) $('envError').textContent = '';
+  renderEnvRows();
+}
+function onEnvPaste() {
+  const r = parseEnvText($('svcEnv').value);
+  envRows = r.rows; envUnknown = r.unknown;
+  if ($('envError')) $('envError').textContent = '';
+  renderEnvRows();
+}
+function collectEnvRows() {
+  const env = {}, errs = [], seen = {};
+  envRows.forEach((r, i) => {
+    const key = String(r.key || '').trim(), value = String(r.value ?? '').trim();
+    if (!key && !value) return;
+    const no = '第 ' + (i + 1) + ' 行：';
+    if (!key) { errs.push(no + '变量名为空'); return; }
+    if (!ENV_KEY_RE.test(key)) { errs.push(no + '变量名不合法（字母数字下划线，不以数字开头）'); return; }
+    if (Object.prototype.hasOwnProperty.call(seen, key)) { errs.push(no + '变量名重复（' + key + '）'); return; }
+    seen[key] = true;
+    if (!value) { errs.push(no + '值为空'); return; }
+    if (value.length > ENV_MAX_VALUE) { errs.push(no + '值超过 ' + ENV_MAX_VALUE + ' 字符'); return; }
+    env[key] = value;
+  });
+  if (!errs.length && !Object.keys(env).length) errs.push('至少填一个环境变量');
+  return {env, errs};
+}
+async function createService() {
+  try {
+    const name = $('svcName').value.trim();
+    const {env, errs} = collectEnvRows();
+    if ($('envError')) $('envError').textContent = errs.join('；');
+    if (errs.length) throw new Error(errs[0]);
+    const j = await api('/api/services/issue', {method: 'POST', body: JSON.stringify({name, env})});
+    $('serviceResult').innerHTML = '<div class="card" style="margin-top:12px"><h3>已创建：' +
+      esc(j.name) + '</h3><p class="meta">把下面这行注入容器环境；token 只显示这一次：</p>' +
+      '<pre class="secret">AGENTKEYGUARD_ENV_URL=' + esc(j.url) + '</pre>' +
+      '<p class="meta">每次容器重启都会重新请求人工授权；不要把 URL 交给 Agent。</p></div>';
+    $('svcName').value = '';
+    clearEnvRows();
+    loadServices(); toast('已创建');
+  } catch (e) { toast(e.message, false); }
+}
+async function revokeService(id) {
+  try {
+    await api('/api/services/revoke', {method: 'POST', body: JSON.stringify({id})});
+    toast('已撤销'); loadServices();
+  } catch (e) { toast(e.message, false); }
+}
+let delSvcId = '';
+function openDelSvc(id, name) {
+  delSvcId = id;
+  $('delSvcName').textContent = name;
+  $('delSvcModal').classList.remove('hide');
+}
+function closeDelSvc() { $('delSvcModal').classList.add('hide'); delSvcId = ''; }
+async function doDeleteService() {
+  if (!delSvcId) return;
+  const id = delSvcId;
+  try {
+    await api('/api/services/delete', {method: 'POST', body: JSON.stringify({id})});
+    closeDelSvc(); toast('已删除'); loadServices();
+  } catch (e) { toast(e.message, false); }
+}
+async function loadEnvPending() {
+  const box = $('pendingList');
+  if (!box) return;
+  const stale = $('envPendingCard');
+  if (stale) stale.remove();
+  try {
+    const j = await api('/api/service/pending');
+    const p = j.pending;
+    if (!p) return;
+    // 并入审批列表，靠 badge 区分两类，不再单独占一块（REQ-121）
+    if (box.querySelector('.empty')) box.innerHTML = '';
+    box.insertAdjacentHTML('beforeend', '<article class="card" id="envPendingCard">' +
+      '<div class="card-top"><h3>' + esc(p.title) + '</h3>' +
+      '<span class="badge warn">服务变量</span>' +
+      '<span class="badge">队列 ' + (p.queue || 1) + '</span></div>' +
+      '<p class="meta" style="margin-top:8px">服务：<span class="nowrap">' + esc(p.service) +
+      '</span> · 来源 <span class="nowrap">' + esc(p.ip) +
+      '</span> · keys：' + esc((p.keys || []).join(', ')) + '</p>' +
+      '<div class="row row-acts" style="margin-top:12px"><div class="acts-r">' +
+      '<button class="danger-btn" onclick="decideEnv(\'' + esc(p.request_id) + '\',\'no\')">拒绝</button>' +
+      '<button class="ok" onclick="decideEnv(\'' + esc(p.request_id) + '\',\'yes\')">批准</button>' +
+      '</div></div></article>');
+  } catch (e) { /* 并入后不再单独报错，避免出现两个错误框 */ }
+}
+async function decideEnv(id, dec) {
+  try {
+    await api('/api/service/decision', {method: 'POST',
+      body: JSON.stringify({request_id: id, decision: dec})});
+    toast(dec === 'yes' ? '已批准' : '已拒绝');
+    loadEnvPending(); loadServices();
+  } catch (e) { toast(e.message, false); }
+}
+async function loadSkill() {
+  // Skill 文档入口现在是静态链接（/skill）；这里保留一个空实现，
+  // 防止旧调用点（若有）因元素被删而报错。
+}
+function copySpecUrl() {
+  // 规范是公开 Markdown：复制的是当前访问地址拼出来的绝对 URL，直接粘给 AI
+  const text = location.origin + '/service-spec';
+  const done = () => toast('已复制开发规范链接');
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(done).catch(() => {});
+  else {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove(); done();
+  }
+}
+async function loadSkillAgents() {
+  const box = $('skillAgentList');
+  if (!box) return;
+  try {
+    const j = await api('/api/skill/agents');
+    const as = j.agents || [];
+    if (!as.length) { box.innerHTML = '<p class="empty">还没有 Agent 接入。点上方「添加密钥」生成一条一次性接入链接。</p>'; return; }
+    const row = (a) => {
+      const st = a.status === 'active' ? '已启用' : (a.status === 'revoked' ? '已吊销' : '待审批');
+      const badge = a.status === 'active' ? 'ok' : (a.status === 'revoked' ? 'warn' : '');
+      // 密钥只有「发出」与「作废」两态：要换就吊销旧的、再发一条新的。
+      // 不做「重新生成」——它会把明文甩在页面上，还会把同一会话的历史断成两条。
+      const btns = a.status === 'revoked'
+        ? '<button class="danger-btn" style="flex:0 0 auto" onclick="deleteAgent(\'' +
+          esc(a.id) + '\', this)">删除</button>'
+        : '<button class="ghost" onclick="revokeAgent(\'' + esc(a.id) + '\', this)">吊销</button>';
+      return '<article class="card"><div class="card-top">' +
+        '<b>' + esc(a.name) + (a.legacy ? '（旧版密钥）' : '') + '</b>' +
+        '<span class="badge ' + badge + '">' + st + '</span>' +
+        '<div class="svc-acts">' + btns + '</div></div>' +
+        '<p class="meta" style="margin-top:8px">尾号 ' + esc(a.token_tail || '——') +
+        ' · 最后使用 ' + esc(a.last_seen || '从未') +
+        (a.ip ? ' · ' + esc(a.ip) : '') + '</p>' +
+        (a.self_intro ? '<p class="meta" style="margin-top:4px">自述：' + esc(a.self_intro.slice(0, 120)) + '</p>' : '') +
+        '</article>';
+    };
+    // 在用的平铺；已吊销与旧版密钥折进 details——多开几次会话就会攒一堆，
+    // 平铺会把真正在工作的那几条淹掉
+    const live = as.filter(a => a.status !== 'revoked' && !a.legacy)
+      .concat(as.filter(a => a.legacy && a.status !== 'revoked'));
+    // 已吊销的 legacy 是 v1.1.x 遗留物，属历史噪音，不再常驻；只保留 active 的让它可被吊销
+    const dead = as.filter(a => a.status === 'revoked');
+    let html = live.map(row).join('') ||
+      '<p class="empty">没有在用的 Agent。</p>';
+    if (dead.length) {
+      html += '<details class="his-fold" style="margin-top:16px"><summary>' +
+        '已吊销 / 旧版密钥 ' + dead.length + ' 条（点开可删除）</summary>' +
+        '<div class="list" style="margin-top:8px">' + dead.map(row).join('') + '</div></details>';
+    }
+    box.innerHTML = html;
+  } catch (e) { box.innerHTML = '<p class="empty">' + esc(e.message) + '</p>'; }
+}
+async function deleteAgent(id, btn) {
+  // 二次点击确认：删掉就不再显示，属于不可撤销操作
+  if (btn && btn.dataset.armed !== '1') {
+    btn.dataset.armed = '1';
+    btn.textContent = '再点一次确认';
+    setTimeout(() => { btn.dataset.armed = '0'; btn.textContent = '删除'; }, 4000);
+    return;
+  }
+  try {
+    await api('/api/agents/delete', {method: 'POST', body: JSON.stringify({id})});
+    toast('已删除');
+    loadSkillAgents();
+  } catch (e) { toast(e.message, false); }
+}
+// 域名与 Public Base 默认只读：平时没人会改，能选中复制才是常态需求
+function toggleDomainEdit() {
+  const el = $('certDomain'), btn = $('domainEditBtn');
+  if (!el) return;
+  if (el.hasAttribute('readonly')) {
+    el.removeAttribute('readonly');
+    el.focus();
+    if (btn) btn.textContent = '完成';
+  } else {
+    el.setAttribute('readonly', '');
+    if (btn) btn.textContent = '编辑';
+    if (!el.value.trim()) el.value = DEFAULT_DOMAIN;
+  }
+}
+function copyAccessUrl() {
+  const d = (($('certDomain') || {}).value || '').trim() || DEFAULT_DOMAIN;
+  const url = 'https://' + d + portSuffix();
+  navigator.clipboard.writeText(url)
+    .then(() => toast('已复制 ' + url))
+    .catch(() => toast('复制失败', false));
+}
+function toggleBaseEdit() {
+  const el = $('stBase'), btn = $('baseEditBtn');
+  if (!el) return;
+  if (el.hasAttribute('readonly')) {
+    el.removeAttribute('readonly');
+    el.focus();
+    if (btn) btn.textContent = '完成';
+  } else {
+    el.setAttribute('readonly', '');
+    if (btn) btn.textContent = '编辑';
+  }
+}
+function copyPublicBase() {
+  const val = (($('stBase') || {}).value || '').trim();
+  const eff = ($('addrEffective') ? $('addrEffective').textContent.trim() : '');
+  // 优先用户显式填的，其次当前生效地址，最后退回浏览器地址栏（都是真实值）
+  const url = val || (eff && eff !== '…' ? eff : location.origin);
+  navigator.clipboard.writeText(url)
+    .then(() => toast('已复制 ' + url))
+    .catch(() => toast('复制失败', false));
+}
+
+// ── 规则面板：403 直接拦截 + 428 灵魂三问（v1.3.4 合并为「拦截策略」一张卡）──
+// 两层语义不一样，代码里也必须分开：
+//   blocked   关闭 = 完全不拦
+//   dangerous 关闭 = 跳过自审，审批照旧（enabled 恒 true，看 reflection）
+let SEC_BLOCKED = [], SEC_DANGEROUS = [];
+let SEC_ACTION = null;
+
+async function loadSecRules() {
+  try {
+    const j = await api('/api/security/rules');
+    SEC_BLOCKED = j.blocked || j.rules || [];
+    SEC_DANGEROUS = j.dangerous || [];
+    renderSecRules();
+  } catch (e) {
+    if ($('secRuleList')) $('secRuleList').innerHTML = '<p class="empty">' + esc(e.message) + '</p>';
+  }
+}
+
+function secQuery() {
+  const el = $('secRuleSearch');
+  return el ? el.value.trim().toLowerCase() : '';
+}
+function secHit(list, q) {
+  // 一个搜索框同时过滤两块
+  return list.filter(r => !q
+    || String(r.name).toLowerCase().includes(q)
+    || String(r.desc || '').toLowerCase().includes(q));
+}
+function layerCN(l) { return l === 'dangerous' ? '428 灵魂三问' : '403 直接拦截'; }
+
+function secRow(r) {
+  const btns = [];
+  if (r.layer === 'blocked') {
+    if (r.locked) {
+      btns.push('<span class="badge warn">不可关闭</span>');
+    } else {
+      btns.push('<button class="' + (r.enabled ? 'ghost' : 'danger-btn') +
+        '" style="flex:0 0 auto" onclick="toggleSecRule(\'' + esc(r.name) + '\',' +
+        (r.enabled ? 'false' : 'true') + ',\'blocked\')">' +
+        (r.enabled ? '关闭' : '开启') + '</button>');
+      btns.push('<button class="ghost" style="flex:0 0 auto" onclick="moveSecRule(\'' +
+        esc(r.name) + '\',\'dangerous\')">降到 428</button>');
+    }
+    if (r.custom) {
+      btns.push('<button class="danger-btn" style="flex:0 0 auto" onclick="deleteSecRule(\'' +
+        esc(r.name) + '\')">删除</button>');
+    }
+  } else {
+    btns.push('<button class="' + (r.reflection ? 'ghost' : 'danger-btn') +
+      '" style="flex:0 0 auto" onclick="toggleSecRule(\'' + esc(r.name) + '\',' +
+      (r.reflection ? 'false' : 'true') + ',\'dangerous\')">' +
+      (r.reflection ? '关闭自审' : '开启自审') + '</button>');
+    btns.push('<button class="ghost" style="flex:0 0 auto" onclick="moveSecRule(\'' +
+      esc(r.name) + '\',\'blocked\')">升到 403</button>');
+  }
+  return '<div class="item"><div class="row" style="justify-content:space-between;align-items:center;gap:8px">' +
+    '<b>' + esc(r.name) + (r.custom ? ' <span class="badge ok">自定义</span>' : '') + '</b>' +
+    '<div class="row" style="gap:6px;flex-wrap:wrap;justify-content:flex-end">' + btns.join('') + '</div>' +
+    '</div><p class="meta">' + esc(r.desc || '') + '</p></div>';
+}
+
+function renderSecRules() {
+  const q = secQuery();
+  const openAttr = q ? ' open' : '';   // 三十多条全铺开太长，默认折起来；搜索时自动展开
+  const bBox = $('secRuleList');
+  if (bBox) {
+    const hit = secHit(SEC_BLOCKED, q);
+    if (!hit.length) {
+      bBox.innerHTML = '<p class="empty">没有匹配的规则</p>';
+    } else {
+      const live = hit.filter(r => !r.locked);
+      const locked = hit.filter(r => r.locked);
+      let html = '';
+      if (live.length) {
+        html += '<details' + openAttr + '><summary class="meta" style="cursor:pointer">可调整（' +
+          live.length + ' 条）</summary><div class="list" style="margin-top:8px">' +
+          live.map(secRow).join('') + '</div></details>';
+      }
+      if (locked.length) {
+        html += '<details class="his-fold" style="margin-top:16px"><summary>' +
+          '自保护（' + locked.length + ' 条 · 不可关闭）</summary><div class="list" style="margin-top:8px">' +
+          locked.map(secRow).join('') + '</div></details>';
+      }
+      bBox.innerHTML = html;
+    }
+    const off = SEC_BLOCKED.filter(r => !r.locked && !r.enabled).length;
+    if ($('secRuleCount')) {
+      $('secRuleCount').textContent = off ? ('已放宽 ' + off + ' 条') : '全部开启';
+      $('secRuleCount').className = 'badge ' + (off ? 'ng' : 'ok');
+    }
+  }
+  const rBox = $('secReflectList');
+  if (rBox) {
+    const hit = secHit(SEC_DANGEROUS, q);
+    if (!hit.length) {
+      rBox.innerHTML = '<p class="empty">没有匹配的规则</p>';
+    } else {
+      const offN = hit.filter(r => !r.reflection).length;
+      rBox.innerHTML = '<details' + openAttr + '><summary class="meta" style="cursor:pointer">' +
+        hit.length + ' 条 · 其中 ' + offN + ' 条已关闭自审</summary><div class="list" style="margin-top:8px">' +
+        hit.map(secRow).join('') + '</div></details>';
+    }
+    const offAll = SEC_DANGEROUS.filter(r => !r.reflection).length;
+    if ($('secReflectCount')) {
+      $('secReflectCount').textContent = offAll ? ('· 已关闭自审 ' + offAll + ' 条') : '· 全部要求自审';
+    }
+  }
+}
+
+async function postSec(url, body, okMsg) {
+  const j = await api(url, {method: 'POST', body: JSON.stringify(body)});
+  if (okMsg) toast(okMsg);
+  loadSecRules();
+  return j;
+}
+
+function openSecAuth(opts) {
+  SEC_ACTION = opts;
+  $('secAuthTitle').textContent = opts.title || '确认操作';
+  $('secAuthDesc').textContent = opts.desc || '';
+  $('secAuthBtn').textContent = opts.btn || '确认';
+  $('secMaster').value = '';
+  $('secTotp').value = '';
+  $('secAuth').classList.remove('hide');
+  if ($('secMaster')) $('secMaster').focus();
+}
+function closeSecAuth() {
+  $('secAuth').classList.add('hide');
+  SEC_ACTION = null;
+}
+async function confirmSecAuth() {
+  const a = SEC_ACTION;
+  if (!a) return;
+  const master = $('secMaster').value, totp = $('secTotp').value;
+  try {
+    if (a.type === 'toggle') {
+      await postSec('/api/security/rules',
+        {name: a.name, enabled: false, master, totp}, '已关闭：' + a.name);
+    } else if (a.type === 'move') {
+      await postSec('/api/security/rules/move',
+        {name: a.name, layer: a.layer, master, totp}, '已降为 428 灵魂三问：' + a.name);
+    } else if (a.type === 'delete') {
+      await postSec('/api/security/rules/delete',
+        {name: a.name, master, totp}, '已删除：' + a.name);
+    }
+    closeSecAuth();
+  } catch (e) { toast(e.message, false); }
+}
+
+function toggleSecRule(name, enable, layer) {
+  const src = layer === 'dangerous' ? SEC_DANGEROUS : SEC_BLOCKED;
+  const r = src.find(x => x.name === name) || {};
+  if (enable) {                       // 开启 = 收紧，不认证
+    postSec('/api/security/rules', {name: name, enabled: true},
+      (layer === 'dangerous' ? '已开启自审：' : '已开启拦截：') + name);
+    return;
+  }
+  openSecAuth({
+    type: 'toggle', name: name, enabled: false,
+    title: layer === 'dangerous' ? '确认关闭这条自审' : '确认关闭这条拦截',
+    desc: layer === 'dangerous'
+      ? '关闭后，这类操作不再要求 Agent 回答灵魂三问，但审批照样会弹到你手机上，你仍然可以拦。规则：' + (r.desc || name)
+      : '关闭后，这一类操作将不再被拦截，连审批都不会弹。规则：' + (r.desc || name),
+    btn: layer === 'dangerous' ? '确认关闭自审' : '确认关闭',
+  });
+}
+
+function moveSecRule(name, target) {
+  const src = target === 'dangerous' ? SEC_BLOCKED : SEC_DANGEROUS;
+  const r = src.find(x => x.name === name) || {};
+  if (target === 'dangerous') {       // 降级 = 放宽，要认证
+    openSecAuth({
+      type: 'move', name: name, layer: 'dangerous',
+      title: '确认把它降为 428 灵魂三问',
+      desc: '这条规则不再被直接拒绝，而是变成「Agent 自审通过后可以申请批准」——'
+          + '也就是说你以后可能会在手机上点同意，让它真的执行。规则：' + (r.desc || name),
+      btn: '确认降级',
+    });
+    return;
+  }
+  postSec('/api/security/rules/move', {name: name, layer: 'blocked'},
+    '已升为 403 直接拦截：' + name);
+}
+
+function deleteSecRule(name) {
+  openSecAuth({
+    type: 'delete', name: name,
+    title: '确认删除这条自定义规则',
+    desc: '删除后这条拦截就没了，也不能撤销。规则：' + name,
+    btn: '确认删除',
+  });
+}
+
+// ── 添加规则 ──
+function openRuleAdd() {
+  $('ruleName').value = '';
+  $('ruleDesc').value = '';
+  $('ruleKw').value = '';
+  $('ruleRe').value = '';
+  $('ruleTestCmd').value = '';
+  $('ruleTestResult').textContent = '';
+  document.querySelector('input[name=ruleMode][value=kw]').checked = true;
+  document.querySelectorAll('.ruleScope').forEach(x => { x.checked = (x.value === 'shell'); });
+  $('ruleLayer').value = 'blocked';
+  ruleModeSwitch();
+  $('ruleAddModal').classList.remove('hide');
+  $('ruleName').focus();
+}
+function closeRuleAdd() { $('ruleAddModal').classList.add('hide'); }
+function ruleModeSwitch() {
+  const re = document.querySelector('input[name=ruleMode]:checked').value === 're';
+  $('ruleKwBox').classList.toggle('hide', re);
+  $('ruleReBox').classList.toggle('hide', !re);
+}
+function ruleDraft() {
+  const re = document.querySelector('input[name=ruleMode]:checked').value === 're';
+  const scope = Array.from(document.querySelectorAll('.ruleScope'))
+    .filter(x => x.checked).map(x => x.value);
+  const d = {
+    name: $('ruleName').value.trim(),
+    desc: $('ruleDesc').value.trim(),
+    layer: $('ruleLayer').value,
+    scope: scope.length ? scope : ['shell'],
+  };
+  if (re) {
+    d.all_of = $('ruleRe').value.split('\n').map(s => s.trim()).filter(Boolean);
+  } else {
+    d.keywords = $('ruleKw').value.split(/[\n,，]/).map(s => s.trim()).filter(Boolean);
+  }
+  return d;
+}
+async function testRuleMatch() {
+  const d = ruleDraft();
+  const cmd = $('ruleTestCmd').value.trim();
+  if (!cmd) { toast('先在试运行框里填一条命令', false); return; }
+  try {
+    const j = await api('/api/security/rules/test', {method: 'POST', body: JSON.stringify({
+      cmd: cmd, scope: d.scope[0], draft: d})});
+    const h = j.hit;
+    $('ruleTestResult').innerHTML = h
+      ? '会命中 <b>' + esc(h.name) + '</b>（' + layerCN(h.layer) + '）：' + esc(h.desc || '（无说明）')
+      : '没有命中任何规则，这条命令会被直接执行 —— 再检查下关键词是不是写偏了。';
+  } catch (e) { toast(e.message, false); }
+}
+async function saveNewRule() {
+  const d = ruleDraft();
+  if (!d.name) { toast('规则名不能为空', false); return; }
+  const body = {name: d.name, desc: d.desc, layer: d.layer, scope: d.scope};
+  if (d.keywords && d.keywords.length) body.keywords = d.keywords;
+  if (d.all_of && d.all_of.length) body.all_of = d.all_of;
+  try {
+    await postSec('/api/security/rules/add', body, '已添加规则：' + d.name);
+    closeRuleAdd();
+  } catch (e) { toast(e.message, false); }
+}
+
+function openTicketForm() {
+  $('ticketForm').classList.remove('hide');
+  if ($('ticketName')) $('ticketName').focus();
+}
+function closeTicketForm() {
+  $('ticketForm').classList.add('hide');
+  if ($('ticketName')) $('ticketName').value = '';
+}
+async function issueTicket(btn) {
+  // 名字就是确认动作：空名字直接拦，填了名字再点才是「我真的要发一张票」
+  const name = ($('ticketName') ? $('ticketName').value.trim() : '');
+  if (!name) {
+    toast('请先给这个密钥起个名字', false);
+    if ($('ticketName')) $('ticketName').focus();
+    return;
+  }
+  btn.disabled = true;
+  try {
+    const j = await api('/api/skill/ticket', {
+      method: 'POST', body: JSON.stringify({name})});
+    $('ticketUrl').textContent = j.url;
+    $('ticketBox').classList.remove('hide');
+    $('ticketHint').textContent = '「' + name + '」的接入链接，有效期 ' + j.expires_in +
+      ' 秒，只能打开一次；打开后立即作废，密钥只在那一次响应里出现。';
+    closeTicketForm();
+    toast('已生成「' + name + '」的接入链接');
+    loadSkillAgents();
+  } catch (e) { toast(e.message, false); }
+  finally { btn.disabled = false; }
+}
+function copyTicket() {
+  const t = $('ticketUrl') ? $('ticketUrl').textContent : '';
+  if (!t) return;
+  navigator.clipboard.writeText(t).then(() => toast('已复制')).catch(() => toast('复制失败', false));
+}
+async function revokeAgent(id, btn) {
+  if (btn && btn.dataset.armed !== '1') {
+    btn.dataset.armed = '1';
+    btn.textContent = '再点一次确认';
+    setTimeout(() => { btn.dataset.armed = '0'; btn.textContent = '吊销'; }, 4000);
+    return;
+  }
+  try {
+    await api('/api/agents/revoke', {method: 'POST', body: JSON.stringify({id})});
+    toast('已吊销'); loadSkillAgents();
+  } catch (e) { toast(e.message, false); }
+}
+async function loadAgents() {
+  try {
+    const j = await api('/api/agents');
+    const as = j.agents || [];
+    $('agentList').innerHTML = as.length ? as.map(a =>
+      '<div class="item"><b>' + esc(a.agent_id) + '</b>' +
+      '<p class="meta">task ' + esc(a.task_id || '') + ' · ' +
+      new Date((a.created || 0) * 1000).toLocaleString() + '</p></div>').join('')
+      : '<p class="empty">暂无 Agent 记录</p>';
+  } catch (e) { $('agentList').innerHTML = '<p class="empty">' + esc(e.message) + '</p>'; }
+}
+
+// 「锁定」已并入「退出登录」：服务端只删会话 + 清 cookie，不碰 Broker.key。
+async function logout() {
+  try { await api('/api/logout', {method: 'POST', body: '{}'}); } catch (e) {}
+  CSRF = '';
+  toLogin();
+}
+function loadData() {
+  loadMe(); loadPending(); loadHistory(); loadSideStats(); loadProfiles();
+  loadSettings(); loadServices();
+  loadTlsStatus(); loadAgents(); loadSkillAgents();
+  startBadgePoll();
+  syncTabMask();
+  armBye();
+}
+async function boot() {
+  try {
+    const me = await api('/api/me');
+    if (!me.unlocked) { toLogin(); return; }
+    CSRF = me.csrf || '';
+    $('deviceName').textContent = me.username || 'admin';
+    if ($('sessWho')) $('sessWho').textContent = me.username || 'admin';
+    if ($('sessHost')) $('sessHost').textContent = location.hostname;
+    setSess(me.session);   // 底部状态条：勾选档显示「保持登录中」，否则本地倒计时
+    loadData();
+    const next = safeNext();
+    if (next !== '/dashboard') location.replace(next);
+  } catch (e) { toLogin(); }
+}
+// 域名 + 换发证书：生物识别移除后，这条链路只剩「证书 SAN 要跟上域名」一件事
+async function openDns() {
+  const domain = ($('certDomain') ? $('certDomain').value.trim() : '') || DEFAULT_DOMAIN;
+  $('dnsDomain').textContent = domain;
+  try {
+    const a = await api('/api/network/addresses');
+    const conf = (a.configured || '').replace(/^https?:\/\//, '').split(':')[0];
+    $('dnsTarget').textContent = conf || a.detected_ip || location.hostname;
+  } catch (e) { $('dnsTarget').textContent = location.hostname; }
+  $('dnsResult').textContent = '';
+  $('dnsGuide').classList.remove('hide');
+}
+async function verifyDns() {
+  try {
+    const domain = $('certDomain').value.trim();
+    if (!domain) throw new Error('请填写访问域名');
+    const j = await api('/api/network/verify', {method: 'POST', body: JSON.stringify({domain})});
+    $('dnsResult').textContent = j.ok
+      ? ('解析成功：' + j.resolved.join(', '))
+      : ('未解析到：' + (j.error || j.resolved.join(', ')));
+    toast(j.ok ? '解析成功' : '还没解析到', j.ok);
+  } catch (e) { toast(e.message, false); }
+}
+async function reissueCert() {
+  try {
+    const domain = $('certDomain').value.trim();
+    if (!domain) throw new Error('请填写访问域名');
+    const j = await api('/api/tls/reissue', {method: 'POST', body: JSON.stringify({domain})});
+    $('dnsResult').textContent = '证书已换发：' + j.origin +
+      (j.restart_required ? '，需要重启服务后生效。' : '，已立即生效（无需重启）。');
+    toast(j.restart_required ? '已换发，需重启服务' : '已换发，立即生效');
+  } catch (e) { toast(e.message, false); }
+}
+function closeDns() { $('dnsGuide').classList.add('hide'); }
+boot();
+setInterval(() => {
+  if (!CSRF) return;
+  if (!$('tab-pending').classList.contains('hide')) loadPending();
+  loadEnvPending();
+}, 3000);
+</script></body></html>

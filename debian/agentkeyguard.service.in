@@ -1,0 +1,56 @@
+[Unit]
+Description=AgentKeyGuard 零凭证代理
+Documentation=file:/usr/share/doc/agentkeyguard/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=agentkeyguard
+Group=agentkeyguard
+EnvironmentFile=/etc/agentkeyguard/agentkeyguard.env
+ExecStart=/usr/bin/agentkeyguard serve
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=10
+KillMode=mixed
+
+# 最小权限：整个文件系统只读，仅放行数据目录与 CA 目录
+# 注意 -ca 这个目录必须一起放行：CA_DIR 默认 /var/lib/agentkeyguard-ca，
+# 不放行的话首次初始化签发证书会报 OSError 30 (Read-only file system)（REQ-109）。
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/agentkeyguard /var/lib/agentkeyguard-ca
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+# 密钥保护（REQ-306）：
+# LimitCORE=0       崩溃时不把整个堆写进 core 文件——否则解锁态下内存里的明文
+#                   会以 root 可读的转储形式重新落回磁盘，比 master.key 更糟
+# MemorySwapMax=0   密钥页不换到 swap：swap 是明文落盘的重灾区，且很少有人想到它
+# ProtectProc      让服务看不到别人的 /proc，减少被"顺手"读取的面
+# ProcSubset=pid    只要 pid 目录，不要 /proc/meminfo 等系统级信息
+LimitCORE=0
+MemorySwapMax=0
+ProtectProc=invisible
+ProcSubset=pid
+
+# 服务端密钥（REQ-308）由服务自己读 /etc/agentkeyguard/vault-secret，
+# 属主 root:agentkeyguard、权限 0640——同组可读、其他用户不可读。
+#
+# 这里**不能**用 LoadCredential=vault_secret:...：该指令在源文件缺失时会让 systemd
+# 直接拒绝启动（file not found），一旦 postinst 没生成或路径不对，服务就再也起不来，
+# 而且此时 AKG 自己就是唯一的管理入口，等于把自己锁在门外（1.2.5 踩过这个坑）。
+# 用普通文件读取，最坏情况只是「这一层不生效」，不会影响服务可用性。
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=agentkeyguard
+
+[Install]
+WantedBy=multi-user.target

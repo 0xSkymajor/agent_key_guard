@@ -1,0 +1,64 @@
+# 内网服务开发规范（AgentKeyGuard 服务注入）
+
+## 1. 启动时读取注入 URL
+
+```python
+import os
+ENV_URL = os.environ["AGENTKEYGUARD_ENV_URL"]
+```
+
+URL 形如：
+
+```
+https://<网关地址>:<端口>/api/service/env?token=<service_token>
+```
+
+`service_token` 是服务身份，不是 Agent 凭据；不要写进镜像层、日志、代码注释或 Git。
+
+## 2. 请求方式
+
+- `GET ENV_URL`，或 `POST /api/service/env`，body 可带 `{"keys": ["DB_URL"]}`。
+- HTTP 客户端超时 **≥ 320 秒**：网关会挂起等待人工批准（默认 300 秒）。
+- 建议带 `X-Service-Name: <服务名>`，方便主人在 Dashboard 里辨认来源。
+- 请求必须串行；不要并发刷接口。
+
+## 3. 处理响应
+
+- `200`：解析 `{"env": {...}}`，把变量载入**内存**（模块变量或 `os.environ`）。
+  - **禁止写盘**、**禁止打印**、**禁止进日志**、**禁止返回给 Agent**。
+- `403`：主人拒绝或服务被撤销；fail fast，不要硬编码兜底密钥，不要重试。
+- `408`：等待超时；按退避策略重试（例如 3 次，间隔 10/30/60 秒），仍失败则 fail fast。
+
+## 4. 重启语义
+
+- URL 不销毁，但**每次（重新）启动都必须重新触发一次人工授权**。
+- 容器不重启，变量常驻内存；容器重启，就要再点一次同意。
+- 这是“单次授权生效”，不是“URL 一次性”。
+
+## 5. 安全
+
+- 不要把 `AGENTKEYGUARD_ENV_URL` 交给 Agent 或写进 Prompt。
+- 不要把变量写进镜像层、构建缓存、日志、错误上报。
+- 服务被撤销后，URL 立即失效；重新创建服务会发新 token。
+
+## 6. 最小示例
+
+```python
+import os, time, requests
+
+def load_env():
+    url = os.environ["AGENTKEYGUARD_ENV_URL"]
+    for delay in (0, 10, 30, 60):
+        if delay:
+            time.sleep(delay)
+        r = requests.get(url, headers={"X-Service-Name": "my-service"}, timeout=320)
+        if r.status_code == 200:
+            for k, v in r.json()["env"].items():
+                os.environ[k] = v
+            return
+        if r.status_code == 403:
+            raise RuntimeError("AgentKeyGuard 拒绝了环境变量请求")
+    raise RuntimeError("AgentKeyGuard 环境变量请求超时")
+
+load_env()
+```

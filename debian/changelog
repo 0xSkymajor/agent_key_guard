@@ -1,0 +1,742 @@
+agentkeyguard (1.4.4-rc1) unstable; urgency=medium
+
+  * v1.4.4-rc1：UI 细节收敛。
+    - 凭证页「暂无凭证」在宽屏（3 列网格）下横跨整行并水平居中，不再落在左上角。
+
+ -- agent_bot <agent@ai.com>  Sun, 15 Nov 2026 17:35:00 +0800
+
+agentkeyguard (1.4.3) unstable; urgency=medium
+
+  * v1.4.3：修复「一次授权出现两个请求」。
+    - 审批队列按「Agent + 类型 + 目标 + 命令/语句」做并发去重：同一条请求被客户端
+      重试时，只挂一张卡、只推一次，第二条复用第一条的结论；
+    - 去重命中时回包带 duplicate=true，各适配器据此跳过执行，避免同一操作执行两遍；
+    - 审计新增 pending_created / approval_dedupe 事件，便于事后追查重复来源；
+    - 一次性接入链接核销加锁，修掉并发打开同一链接可能签发两条密钥的竞态。
+
+ -- agent_bot <agent@ai.com>  Thu, 12 Nov 2026 22:10:00 +0800
+agentkeyguard (1.4.2) unstable; urgency=medium
+
+  * v1.4.2：仅脱敏，无功能改动。
+    - 文档、注释、测试样例与前端占位符中的内网地址统一替换为文档示例网段；
+    - 主机名与本机路径替换为通用示例；
+    - 默认 IP 白名单常量保持不变（属于功能性配置）；
+    - 示例配置中的 PUBLIC_BASE 等改为示例值，不影响运行时默认行为。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 21:30:00 +0800
+
+agentkeyguard (1.4.1) unstable; urgency=medium
+
+  * v1.4.1：界面收口与修复（汇总 1.4.1-rc3 ~ rc9）。
+    - 登录页：全宽构图、表单贴右、协作流回左下并改名「协作流演示」，去掉深色衬底；
+    - 底部会话状态条两端贴浏览器宽度；
+    - Agent 接入：去掉易误解的地址卡，标题右侧「打开 MD 文档」，文案收敛；
+    - 设置：访问地址只列 局域网 IP / 回环 / localhost / 域名；访问地址与 HTTPS 证书
+      合并为「访问地址与证书」；新增「硬件」构想页（纯展示）；
+    - 审批工作台重排：待审批 → 拦截策略 → 最近记录 → 审批历史（默认折叠，显示条数）；
+    - 修复 legacy 占位每次升级复活：吊销永久清除，只在真正使用旧 token 时登记；
+    - 文档归档、README 截图重拍。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 20:45:00 +0800
+
+agentkeyguard (1.4.1-rc9) unstable; urgency=medium
+
+  * 1.4.1 界面 RC9：审批工作台重排。
+    - 顺序改为 待审批 → 拦截策略 → 最近记录 → 审批历史；
+    - 审批历史默认折叠（<details>），折叠头显示条数，展开才铺列表；
+    - 去掉「待审批 / 历史」分段控件与左右双栏，改单列堆叠；
+    - 窄屏拦截策略三列改竖排。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 20:25:00 +0800
+
+agentkeyguard (1.4.1-rc8) unstable; urgency=medium
+
+  * 1.4.1 修复：legacy 占位反复出现。
+    - 根因：ensure_legacy 在任何 Bearer 请求上都会跑；看到 revoked 就 pop 记录并落盘，
+      墓碑被删掉后下一次调用又登记成 active，于是每次升级/请求都「复活」；
+    - 现在：吊销 legacy = 彻底清除 + 落 legacy_dropped 标记，永不再生成；
+      普通 Agent 的请求不再触发迁移，只有真正拿旧全局 token 使用时才登记；
+    - 升级后第一次打开 Agent 接入页会清掉「从未使用过」的 legacy 占位，无需手动操作；
+    - selftest [58] 增加复活/清理/幂等三条回归断言。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 20:40:00 +0800
+
+agentkeyguard (1.4.1-rc7) unstable; urgency=medium
+
+  * 1.4.1 界面 RC7：设置新增「硬件」二级子菜单，一页纯展示的硬件构想
+    （手里的审批终端：小屏 + 两键 + 麦克风），说明接入方式与当前状态，
+    欢迎二次开发；无接口、无配置项，不影响现有审批。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 20:05:00 +0800
+
+agentkeyguard (1.4.1-rc6) unstable; urgency=medium
+
+  * 1.4.1 界面 RC6：
+    - 访问地址只列四条：局域网 IP / 本机回环 / localhost / 域名；docker、br-、
+      veth 等虚拟网卡不再出现在「本机可用入口」；
+    - 新增「域名」入口（证书 SAN 已包含，需 DNS 指向本机）；
+    - 设置子菜单「访问地址」与「HTTPS / 证书」合并为「访问地址与证书」，
+      地址、域名、根证书在同一页；删除重复的证书 SAN 提示。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 19:45:00 +0800
+
+agentkeyguard (1.4.1-rc5) unstable; urgency=medium
+
+  * 1.4.1 界面 RC5：Agent 接入文案收敛——副标题压成一句「生成一次性接入链接，
+    10 分钟有效、仅可使用一次。」，删掉重复的口语化引导段。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 19:15:00 +0800
+
+agentkeyguard (1.4.1-rc4) unstable; urgency=medium
+
+  * 1.4.1 界面 RC4：登录页「协作流」更名为「协作流演示」；去掉协作流背后的
+    深色模糊衬底（.stream::before），卡片直接叠在背景与 Logo 上。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 19:00:00 +0800
+
+agentkeyguard (1.4.1-rc3) unstable; urgency=medium
+
+  * 1.4.1 界面 RC3：登录页改回「表单贴右、协作流回左下」，整页仍是全宽构图
+    （不再跟 1720 设计稿宽度走）；表单右边距随窗口 4vw（24–72px）。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 18:45:00 +0800
+
+agentkeyguard (1.4.1-rc2) unstable; urgency=medium
+
+  * 1.4.1 界面 RC2：登录页协作流收窄到 220–280px、高度 260，
+    与 0.618 处的表单之间留出呼吸感。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 18:20:00 +0800
+
+agentkeyguard (1.4.1-rc1) unstable; urgency=medium
+
+  * 1.4.1 界面 RC1：
+    - 底部会话状态条改为两端贴浏览器宽度，超宽屏不再跟着 1440 内容宽度内缩；
+    - Agent 接入去掉「把这段地址发给 Agent」整卡（容易让人以为只发地址就够），
+      标题右侧只留「打开 MD 文档」，下方改为引导「添加密钥 → 一次性链接」；
+    - 登录页改为全宽构图：表单落在横向 0.618，守护者 Logo 贴左、协作流贴右
+      （协作流在 <1440 时隐藏，避免与 0.618 的表单相撞）；
+    - 需求文档记录 REQ-200（自定义 Skill，搁置）。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 18:05:00 +0800
+
+agentkeyguard (1.4.0) unstable; urgency=medium
+
+  * 1.4.0 正式发布：
+    - 全站视觉重做：登录页、控制台五页、手机审批页、初始化向导、favicon 与 README 配图；
+    - RC1–RC21 期间修掉的间距体系、窄屏导航可达性、断行、浮层遮挡、Logo 渐变色冲突
+      一并合入；selftest 85 项全绿；
+    - 服务开发规范改为公开 Markdown（/service-spec，打开即读、可复制、可下载），
+      Agent 接入保持 /skill；两处都给 AI 一条 URL 就能读。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 17:30:00 +0800
+
+agentkeyguard (1.4.0-rc21) unstable; urgency=medium
+
+  * 1.4 界面 RC21：服务页「打开开发规范 / 复制链接 / 下载」三个入口，复制的是当前
+    访问地址拼出的 /service-spec 绝对链接，可直接粘给 AI。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 17:20:00 +0800
+
+agentkeyguard (1.4.0-rc20) unstable; urgency=medium
+
+  * 1.4 界面 RC20：
+    - 服务开发规范改成公开 Markdown：GET /service-spec 打开即读，模板里的
+      <网关地址>:<端口> 会替换成真实地址，方便把链接直接丢给 AI；
+    - 服务页入口拆成「打开开发规范」（新标签页读）+「下载」（?download=1），
+      去掉控制台里的 fetch+blob 下载；
+    - 服务表单限宽 920px，1440 下输入框不再拉满整页；
+    - 601-900 宽下页头的「待审批 / 历史」回到标题右侧同类；
+    - ≤900 设置页二级导航与「待审批 / 历史」统一成同一套分段控件。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 17:05:00 +0800
+
+agentkeyguard (1.4.0-rc19) unstable; urgency=medium
+
+  * 1.4 界面 RC19：
+    - 待审批列表去掉「卡套卡」：内层不再是一张带边框/渐变的卡，只留左侧强调线；
+    - 辅助字号整体抬一档：meta 11.5→12、badge/kind/chip 10.5→11、ghost 11.5→12、主按钮 12.5→13；
+    - 凭证表单在 ≥601 宽下主机/端口、用户/密码两两并排（窄屏仍单列），保存/测试按钮收拢到右侧；
+    - 手机审批的终态页补「返回控制台」入口。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 16:45:00 +0800
+
+agentkeyguard (1.4.0-rc18) unstable; urgency=medium
+
+  * 1.4 界面 RC18：
+    - 登录页 Logo 再次不显示：页内有两份内联 SVG（水印 + 品牌标）共用同一组渐变色 id，
+      窄屏隐藏水印后品牌标取不到渐变——给水印换独立 id，品牌标恢复实心；
+    - 设置页「拦截策略」卡头与其它卡统一（同样的标题条 + 分隔线），正文行长限宽 780px；
+    - 抽屉里「命令」与命令块之间的空档压缩；
+    - 手机审批的成功 / 失败页，以及初始化失效页竖向居中，不再下半页全空。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 16:30:00 +0800
+
+agentkeyguard (1.4.0-rc17) unstable; urgency=medium
+
+  * 1.4 界面 RC17：
+    - 窄屏不再渲染 tab 角标（右下胶囊已表达同一信息），430 下 5 个 tab 完整可见；
+    - 顶栏 / 设置二级导航的渐隐只在溢出超过 6px 时出现，390 下「设置」不再被淡化。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 16:15:00 +0800
+
+agentkeyguard (1.4.0-rc16) unstable; urgency=medium
+
+  * 1.4 界面 RC16（全页面视觉复核后的收口）：
+    - 修复初始化完成页桌面端两张卡同格重叠（右侧两卡改为独立列容器）；
+    - 间距只留两个来源：顶层 16 / 卡内 12，服务卡、Agent 卡、历史项的 32/34 消除；
+    - 修复 .danger 类名冲突导致凭证卡删除图标下移 9px；
+    - 环境变量待审批卡不再重复出现（前端去重 + 去掉多余调用）；
+    - 窄屏顶栏：品牌只留图形、tab 收窄，430 下 5 个入口可见；切换 tab 自动滚入视野；
+    - 断行：正文改 overflow-wrap，IP/时间/请求码不断行；会话行时间拆两行；
+    - 浮动待审批胶囊改不透明并缩小，各页底部留白 96px；
+    - 主按钮不再桌面通栏；设置列居中；操作行不再被 space-between 摊开；
+    - 圆角收成 6/8/10/14/999；辅助文字对比度提升到 4.5:1 一档；
+    - 初始化向导桌面端 820px 双栏并居中，主按钮改品牌蓝；
+    - 登录页 ≤1099 隐藏水印（不再压住表单），面板宽度统一 420px；
+    - 手机审批页倒计时提升对比度、拒绝按钮加强、原因输入 16px 防 iOS 缩放。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 16:05:00 +0800
+
+agentkeyguard (1.4.0-rc15) unstable; urgency=medium
+
+  * 1.4 界面 RC15：
+    - 移除背景中重复的内联 SVG（重复 gradient id 会让页头 Logo 的渐变失效、看起来像消失）；
+    - 页头品牌区禁止 flex 收缩，窄窗口不再被 tab 挤掉；
+    - 背景只保留底部品牌色光斑。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 17:40:00 +0800
+
+agentkeyguard (1.4.0-rc14) unstable; urgency=medium
+
+  * 1.4 界面 RC14：MD 文档按钮保持原位置，仅修正按钮框内文字居中。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 17:25:00 +0800
+
+agentkeyguard (1.4.0-rc13) unstable; urgency=medium
+
+  * 1.4 界面 RC13：
+    - 恢复完整「已吊销」列表；后端在加载时清除已吊销的 legacy 记录，
+      不再每次升级出现 v1.1.x 遗留全局密钥；
+    - a.ghost 按钮改为 inline-flex 居中（MD 文档按钮文字框对齐）；
+    - 背景移除 Logo，底部改用品牌色光斑透出。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 17:10:00 +0800
+
+agentkeyguard (1.4.0-rc12) unstable; urgency=medium
+
+  * 1.4 界面 RC12（评审问题清单）：
+    - 凭证类型选择与字段间距加大；Agent 接入 MD 文档按钮居中；
+    - 折叠头/分隔线垂直间距对称；命令块自动换行、复制按钮不再错位；
+    - 已吊销的 legacy 密钥不再常驻列表（active 的仍可吊销）；
+    - 侧栏「最近记录」标注为 5 条速览，与左栏完整历史区分。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 16:55:00 +0800
+
+agentkeyguard (1.4.0-rc11) unstable; urgency=medium
+
+  * 1.4 界面 RC11：
+    - 背景改为两层：超大字标 Logo 先做高斯模糊在最底，深色半透明背景板盖在上面，
+      只透出一点 Logo 的光；随窗口缓慢浮动；
+    - 服务列表空态改为跨列居中。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 16:35:00 +0800
+
+agentkeyguard (1.4.0-rc10) unstable; urgency=medium
+
+  * 1.4 界面 RC10（背景彻底分层）：
+    - 页面背景改为独立 fixed 图层，body 只留纯色底；
+    - 宣传带去掉 blur/mask，改为自带不透明渐变面的独立层；
+    - 右下浮动提醒去掉 backdrop-filter；
+    - 解决滚动时背景色块随内容移动/出现横向分界的问题。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 16:20:00 +0800
+
+agentkeyguard (1.4.0-rc9) unstable; urgency=medium
+
+  * 1.4 界面 RC9（滚动断层修复）：
+    - 顶栏去掉 backdrop-filter 毛玻璃（Chromium 合成层在滚动时出现横向色带），
+      改为高不透明度纯色背景 + 发光描边；滚动时不再出现背景断层。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 16:00:00 +0800
+
+agentkeyguard (1.4.0-rc8) unstable; urgency=medium
+
+  * 1.4 界面 RC8（背景断层修复）：
+    - 顶栏 tab 在窄屏改为横向滚动，不再把页面撑宽（窄屏横向溢出的根因）；
+    - 页面背景去掉 fixed 附着，改为随文档铺满，手机长页面不再出现横向色带；
+    - body 兜底禁止横向溢出。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 15:45:00 +0800
+
+agentkeyguard (1.4.0-rc7) unstable; urgency=medium
+
+  * 1.4 界面 RC7（按钮/分隔线规范）：
+    - 按钮尺寸体系：主按钮 34–36px 自动宽度、次按钮 28px、页级保存 38px；
+      去掉设置页「添加渠道/保存设置」通栏拉伸；
+    - 分隔线统一为 1px rgba(143,208,255,.06–.08)，区块间距 16–18px；
+    - 折叠箭头统一为 5×5px 折角，替换字符 ▸ 与默认三角；
+    - 设计规范补充「按钮与分隔线」章节。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 15:30:00 +0800
+
+agentkeyguard (1.4.0-rc6) unstable; urgency=medium
+
+  * 1.4 界面 RC6（响应式细节）：
+    - 设置子菜单：窄屏改为横向可滑动单行（不再 2×2 换行占位）；
+    - 修正 rc5 内容列宽度上限覆盖窄屏单列的问题；
+    - approve / setup 页圆角与按钮高度并入统一体系（14/10）；
+    - 矮窗口下凭证宣传带自动让位，避免与状态条挤在一起。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 15:15:00 +0800
+
+agentkeyguard (1.4.0-rc5) unstable; urgency=medium
+
+  * 1.4 界面 RC5（细节收敛）：
+    - favicon 去掉圆角底框，只保留 Logo 本体；
+    - 设置页版式收敛：卡片标题统一 card-head 样式、内容列宽上限 920px、
+      输入框上限 620px、主按钮不再通栏拉满；
+    - 圆角统一：卡片 14 / 内嵌盒 10 / 输入 8。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 15:00:00 +0800
+
+agentkeyguard (1.4.0-rc4) unstable; urgency=medium
+
+  * 1.4 界面 RC4：
+    - 顶栏导航与 Logo 同行，移除两块统计卡（计数移到页头/全局提醒）；
+    - 顶栏改半透明毛玻璃，消除滚动时的背景断层；
+    - 审批支持「快速审批」：卡片上直接同意/拒绝；
+    - 新增「查看详情」右侧抽屉：状态胶囊、自省、类型/目标/请求码、命令复制、
+      底部同意/拒绝，与手机审批页同一套语言；ESC / 点遮罩关闭。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 14:45:00 +0800
+
+agentkeyguard (1.4.0-rc3) unstable; urgency=medium
+
+  * 1.4 界面 RC3：
+    - 底部会话状态条改为新布局：左侧登录状态、右侧用户名与主机；
+    - 全局待审批提醒：审批工作台 tab 角标 + 右下浮动胶囊（有新增时 toast），
+      不在工作台时也能看到待审批数量；
+    - 初始化向导桌面左侧步骤栏（rc2 后提交，本版进包）。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 14:35:00 +0800
+
+agentkeyguard (1.4.0-rc2) unstable; urgency=medium
+
+  * 1.4 界面版式迁移 RC2：
+    - 审批工作台改为设计稿的两栏：左待审批/历史卡，右拦截策略计数 + 最近记录；
+    - 凭证改三列卡片、类型分段选择、TOTP 六格查看弹窗、底部宣传带；
+    - 服务列表双列卡片，Agent 接入加页头，设置改左侧竖向导航；
+    - 手机审批页加 300 秒倒计时。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 14:05:00 +0800
+
+agentkeyguard (1.4.0-rc1) unstable; urgency=medium
+
+  * 1.4 界面改版 RC1：
+    - 登录页 / 控制台五 tab（审批 / 凭证 / 服务 / Agent 接入 / 设置）/ 手机审批页 /
+      初始化向导全部换新视觉；凭证、服务、Agent 接入列表卡片化。
+    - 新增 /favicon.svg、/favicon.ico 路由，标签页显示品牌图标。
+    - 版本号约定：迭代期用 1.4.0-rcN，最终合并发布时改回 1.4.0。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 14:05:00 +0800
+
+agentkeyguard (1.4.0-rc0) unstable; urgency=medium
+
+  * 视觉改版（1.4 界面更新）：
+    - 登录页换成新的品牌版式：左侧大 Logo / 右侧登录面板，深色底 + 光效；
+      协作流示意与粒子背景为纯装饰，表单逻辑仍是 /api/unlock/password。
+    - 新增 /favicon.svg 与 /favicon.ico 路由，标签页显示品牌图标（替代空白地球）。
+    - 保留原有登录逻辑与错误提示，仅替换视觉层。
+  * 版本号 v1.3.6 -> v1.4.0。
+
+ -- agent_bot <agent@ai.com>  Sun, 02 Nov 2026 12:40:00 +0800
+
+agentkeyguard (1.3.6) unstable; urgency=medium
+
+  * 初始化完成页不再回显 TOTP 密钥（REQ-151）。那串 32 位 Base32 和「首个接入
+    链接」换出来的密钥长得一样，并排出现会让人把它当成要发给 AI 的凭证（实测
+    复制出去调接口 401），而它其实是动态码备份，第 2 步扫码时已经给过。
+  * 完成页只保留 主密码（默认掩码）/ 访问地址 / 首个接入链接 / 根证书 四块，
+    原位置改留一句说明：动态码密钥已在第 2 步给出。
+  * setup.finish() 的完成页数据删除 totp_secret，不再随 /api/setup/finish
+    响应进浏览器内存；portal 里的 totp_secret 不动，登录仍照常校验。
+  * 自检 [70] 增补：完成页不得出现 TOTP 明文与占位符，finish 数据不得携带该字段。
+
+ -- bella <bella@local>  Sun, 01 Nov 2026 20:40:00 +0800
+
+agentkeyguard (1.3.5) unstable; urgency=medium
+
+  * 关页宽限从 120 秒收紧到 60 秒（会话级 cookie 不变）：关掉面板窗口约
+    1 分钟后那条会话记录就消失，不再等 2 分钟。SESSION_BYE_GRACE 默认 60，
+    仍可用 AGENTKEYGUARD_SESSION_BYE_GRACE 调回 120。
+  * 为什么 60 秒不会误踢还开着但不看的标签页：current() 里正在发请求的会话
+    带 keep，永远不会被自己的请求清掉；只有另一个会话抢在它下一次心跳之前
+    扫到才会误踢，概率极低且重新登录即可。
+  * 会话卡副标题改为按 bye_grace 动态换算（60 秒 → 「约 1 分钟」），文案
+    不再写死。
+
+ -- bella <bella@local>  Sun, 01 Nov 2026 14:40:00 +0800
+
+agentkeyguard (1.3.4) unstable; urgency=medium
+
+  * 拦截策略统一架构（REQ-149）：原「灵魂三问」「敏感权限自动屏蔽」两张卡
+    合并为一张「拦截策略」，卡头画 403 → 428 → 审批台 流水线，卡内按等级
+    分两组；唯一的「+ 添加规则」移到卡头，等级下拉默认 428（可选 403）；
+    跨级按钮改为「降到 428 / 升到 403」；术语统一为 403 直接拦截 / 428 灵魂三问。
+  * 关页即退（REQ-150）：面板 pagehide 时 sendBeacon 打 POST /api/session/bye，
+    服务端不立刻删——刷新与站内跳转会撤销标记，超过 120 秒（SESSION_BYE_GRACE）
+    无任何请求才清会话并落 session_bye 审计。关掉窗口后约 2 分钟记录消失，
+    不再挂到 idle 到期。
+  * 在线判定改用 seen（最近任何请求，阈值 SESSION_ONLINE=90 秒）：
+    关掉的标签页会显示「已离线」并置灰，不再算进在线数；
+    新增「清理已离线」按钮（POST /api/sessions/prune）。
+  * 近期记录默认折叠（原生 details），标题带条数。
+  * 换发证书的 SAN 改用 setup.san_lists()，与初始化路径一致（全部物理网卡 IP
+    + 本机域名），修「装好根证书后按域名访问仍报不安全」（REQ-142 补充）。
+  * 自检 [85] 补：bye 标记可被请求撤销、宽限过后扫掉并落 session_bye、
+    离线判定、清理离线不影响自己。
+
+ -- bella <bella@local>  Sun, 01 Nov 2026 14:10:00 +0800
+
+agentkeyguard (1.3.3) unstable; urgency=medium
+
+  * 会话简化为「已登录 / 未登录」两态：删除 expires 绝对过期，只保留一个
+    滑动 idle。不勾选默认 15 分钟；勾选「本窗口保持登录」走 4 小时兜底，
+    窗口被遮挡、系统短暂睡眠后回来仍在。
+  * session cookie 改为浏览器会话级（不写 Max-Age）：关浏览器即失效，这是
+    「关窗即退」的真正保障；服务端只保留内存会话，不落盘、不写 token。
+  * 不勾选档由页面 pointerdown / keydown / wheel 事件节流 60 秒调
+    POST /api/session/touch 无感续期，不加服务、不加算法、不加后台线程；
+    面板自身轮询刻意不续期，否则 15 分钟超时会名存实亡。
+  * 控制台底部新增常驻会话状态条：勾选档显示「保持登录中，关闭窗口即退出」，
+    普通档秒级倒计时、最后 60 秒转警示色、归零直接跳登录页。
+  * 「锁定」并入「退出登录」：新增 POST /api/logout，/api/lock 保留为别名。
+    两者都只删会话与 cookie，从不触碰 Broker.key，Agent 拦截行为不变。
+  * 设置 → 账号与安全新增「登录会话」卡：在线会话（设备摘要 / IP / 登录时间 /
+    最近活动 / 是否保持登录 / 是否本机）、行内二次确认的踢下线、近期记录。
+    会话标识用 sha256(token) 前 12 位，原始 token 永不出接口。
+  * 会话上限 8 条（AGENTKEYGUARD_SESSION_MAX 可调），超出淘汰最久未活动的一条；
+    近期记录由 storage.read_audit_tail 从审计尾部 64KB 块倒读，不整文件读入。
+  * 新增自检 [85]：无 Max-Age、双档续期 span、仅 touch 可续、15 分钟过期落
+    session_expired、踢下线 is_self、sid 摘要、设备摘要、超限淘汰、尾部倒读。
+
+ -- AgentKeyGuard <admin@agentkeyguard.local>  Sun, 01 Nov 2026 12:00:00 +0800
+
+agentkeyguard (1.3.2) unstable; urgency=medium
+
+  * 规则面板补完：设置 → 账号与安全 在「管理员」与「敏感权限自动屏蔽」之间
+    新增独立的「灵魂三问」区块，暴露 rules.json 的 dangerous 层（34 条），
+    说明「先自审、再推审批」的语义。
+  * 两层之间可搬规则：屏蔽层 → 灵魂三问属于放宽，需主密码 + 动态码，弹层
+    直白写明「这类操作将变成可以审批」；反向升回属于收紧，直接生效。
+    自保护规则既不能关闭也不能搬动；搬动后开关状态复位为开启。
+  * 两层的「关闭」语义分开：屏蔽层关闭 = 完全不拦截；灵魂三问关闭 = 跳过
+    428 自审，审批照旧。新增 settings.reflection_off 独立键，match_rule 只在
+    blocked 层读取 rules_off，杜绝「关掉自审等于放行」的安全回归。
+  * 新增自定义规则：「+ 添加规则」表单支持关键词（自动转义）、高级正则
+    （pattern / all_of）、作用通道多选、选择层级，并配试运行回显命中结果；
+    写入 vault 的 settings.custom_rules，不触碰 /etc 下的 dpkg conffile。
+  * 新增接口：POST /api/security/rules/move、/add、/delete、/test；
+    GET /api/security/rules 同时返回 blocked 与 dangerous 两段。
+    审计新增 security_rule_move / security_rule_add / security_rule_delete。
+  * 修复 pg / mysql 适配器未把 rules_off 传给 match_rule 的问题：此前在面板
+    关闭的屏蔽规则对 SQL 通道不生效。
+  * 审批卡片增加「本条规则已关闭自审」提示，避免出现空白的反思区块。
+
+ -- Bella <bella@localhost>  Sun, 01 Nov 2026 12:00:00 +0800
+
+agentkeyguard (1.3.1) unstable; urgency=medium
+
+  * Bark 通知支持单独启用 / 关闭：设置 → 通知与审批 的 Bark 区块在「测试」按钮
+    后面新增「停用 / 启用」开关，与 Webhook 通知渠道同权。停用后审批不再推 Bark，
+    Webhook 渠道照常推送。
+  * 修复 notify_channels 默认值缺陷：之前默认空数组，第一次调用通知接口会把
+    Bark 从「默认启用」误写成「停用」；现与 apply_vault 口径一致，默认 ["bark"]。
+
+ -- Bella <bella@localhost>  Sat, 31 Oct 2026 23:59:00 +0800
+
+agentkeyguard (1.3.0) unstable; urgency=medium
+
+  * 凭证类型从 3 种扩到 5 种：新增 MySQL、Redis。
+    - MySQL 作为 PostgreSQL 孪生类型，字段与表单同构（pymysql、端口 3306）；
+    - Redis 命令三层白名单：读命令免审批、写命令走审批、清库/改配置/执行脚本
+      （FLUSHALL / CONFIG / EVAL / KEYS）直接拒绝，SCAN 强制 MATCH+COUNT。
+  * 数据库不再锁死单库（REQ-147）：凭证库名降级为「默认库（可空）」，请求可带
+    `database` 切库；新增 `/pg/databases`、`/mysql/databases` 列库接口。
+    权限边界交给 DB 账号（给 AI 单独建只读账号），网关不维护库白名单。
+  * 执行路由改前缀派发（REQ-106 收官）：`/pg/query`、`/ssh/exec`、`/git/exec`、
+    `/mysql/query`、`/redis/cmd` 走同一入口，以后加类型不再动 server 核心。
+  * 通知渠道重构（REQ-146）：审批推送从「只绑 Bark」改成「Bark + 多条 Webhook
+    渠道」，支持 8 个预设（钉钉/飞书/企业微信/Slack/Telegram/ntfy/Gotify/自定义）；
+    安卓用户建一条 ntfy 渠道即可收到审批推送。渠道是系统的通知出口，Agent 不可见。
+  * 砍掉「Bark 保存后自动落成服务里的 BARK_URL」（语义污染），旧版遗留的
+    builtin=notice 服务在解锁迁移时自动清理。
+  * Skill 文档修正：删除已失效的 /api/skill/activate 段落，改为「向主人索取一次性
+    接入链接」，并补 MySQL/Redis/列库的调用约束。
+
+ -- Bella <bella@localhost>  Sat, 31 Oct 2026 23:59:00 +0800
+
+agentkeyguard (1.2.8) unstable; urgency=medium
+
+  * 敏感权限面板默认折叠：blocked 规则已有 37 条，此前一次性全部铺开，
+    面板长得要滚好几屏。改为默认收起，只有输入搜索词时才自动展开命中项。
+    自保护分组本来就是折叠的，两个分组现在行为一致。
+
+ -- Bella <bella@localhost>  Sat, 31 Oct 2026 23:50:00 +0800
+
+agentkeyguard (1.2.7) unstable; urgency=medium
+
+  * 修复 1.2.6 启动即崩：`cmd_serve` 里引用了重构时已删除的局部变量 `data`，
+    启动瞬间 NameError，服务根本没开始监听（端口拒绝连接，主机本身正常）。
+    该处改为从 `Broker.vault` 读取——锁定态下它就是个空字典；
+    启动横幅同时明确显示「状态: 锁定（浏览器登录一次即可解锁）」。
+  * 自检新增启动冒烟（[79]）：真的用子进程把 `serve` 起起来并请求 `/health`，
+    确认端口在 8 秒内监听、且 `locked` 为 true。
+    此前 79 项里没有一条真正启动过服务，所以这类启动期崩溃能一路全绿通过——
+    这是这次代价最贵的教训，断言只测函数不测进程，等于没测启动链路。
+
+ -- Bella <bella@localhost>  Sat, 31 Oct 2026 23:10:00 +0800
+
+agentkeyguard (1.2.6) unstable; urgency=medium
+
+  * 修复 1.2.5 装完服务起不来的问题：systemd 的
+    `LoadCredential=vault_secret:/etc/agentkeyguard/vault-secret` 在源文件缺失时
+    会让 systemd 直接拒绝启动，而那时 AKG 自己是唯一的管理入口，等于把门锁死。
+    改为服务直接读该文件（属主 root:agentkeyguard、权限 0640），
+    最坏情况只是这一层加固不生效，不影响服务可用性。
+  * 服务端密钥文件生成失败时不再影响安装：`chown/chmod` 都带容错。
+
+ -- Bella <bella@localhost>  Sat, 31 Oct 2026 22:30:00 +0800
+
+agentkeyguard (1.2.5) unstable; urgency=medium
+
+  * 密钥不再落盘（REQ-306）：删掉 master.key，解密密钥由主密码在登录时现算。
+    磁盘上只剩密文，拿走它只能得到一团解不开的数据。
+  * 启动进入锁定态：服务重启后需要登录一次，解锁前业务接口返回 423
+    （明确表达「暂时锁着」，避免 Agent 误判密钥失效而去重新申请）。
+  * 锁屏与封存分离：会话超时或点「锁定」只清 Cookie，密钥与凭据留在内存，
+    AI 请求与审批队列完全不受影响——关掉浏览器再登录，审批照旧。
+  * 可选的服务端密钥（REQ-308）：KEK 再混一层 /etc 下的 root-only 随机密钥，
+    经 systemd LoadCredential 传入。挡住「拿到服务用户权限但不是 root」这一类。
+    ⚠ 该文件参与密钥派生，丢失后数据无法恢复，务必备份。
+  * 拦截读内存命令（REQ-307）：/proc/*/mem、/proc/*/environ、/proc/kcore、
+    gdb/strace、ptrace、process_vm_readv、dd 搬内存、core dump、内联脚本、
+    解码管道共九类，命中直接 403，连审批都不弹——看不懂的命令不该给「同意」。
+  * 「账号与安全」新增敏感权限面板：规则分组折叠、支持搜索、默认全开；
+    关闭任意一条需要密码 + 动态码，重新开启不需要（只会更安全）；
+    自保护规则硬编码为不可关闭。
+  * 进程加固：PR_SET_DUMPABLE=0 / PR_SET_PTRACER=0 / mlockall，
+    systemd 加 LimitCORE=0、MemorySwapMax=0、ProtectProc=invisible、ProcSubset=pid。
+  * 403 响应带上规则说明（explain），审批卡片渲染高危操作的后果说明；
+    /skill 补充 423 语义（锁着 ≠ 密钥失效）。
+
+ -- Bella <bella@localhost>  Sat, 31 Oct 2026 21:40:00 +0800
+
+agentkeyguard (1.2.4) unstable; urgency=medium
+
+  * 移除「账号 / HTTP」凭证类型：它只能测活、没有执行通道（executes=False），
+    URL + 账号的组合也说不清指向哪个系统，调用方无从判断该拿它做什么。
+    旧库里残留的这类凭证仍能显示与删除，只是不能再新建或测试。
+  * 移除密钥的「重新生成」：与主流 API Key 管理一致，密钥只有「发出」和「作废」
+    两态；换密钥 = 吊销旧的 + 添加新的。同时删掉页面上最后一个明文展示出口，
+    密钥只经一次性接入链接交付，不再有可截图的明文框。
+  * 审批徽标：最早一条等待超过时限一半时，顶栏数字由黄转红，提示再拖就要超时拒绝
+    （默认 300 秒，即 150 秒后变红）。
+
+ -- Bella <bella@localhost>  Sat, 31 Oct 2026 19:10:00 +0800
+
+agentkeyguard (1.2.3) unstable; urgency=medium
+
+  * HTTPS 区块的访问域名改成「可复制」优先：默认只读（能选中、能复制），
+    旁边一个「编辑」按钮，点开才可改，改完点「完成」收回。
+  * 复制域名时自动补端口（`https://example.akg.arpa:7700`）；端口取自当前
+    访问地址，换端口部署时跟着变，不写死。
+  * 访问地址的 Public Base 同样默认只读 + 复制 + 编辑；「复制」优先给已填的值，
+    留空时给当前生效地址。
+
+ -- Bella <bella@localhost>  Sat, 31 Oct 2026 18:05:00 +0800
+
+agentkeyguard (1.2.2) unstable; urgency=medium
+
+  * 审批标题说人话：Agent 没传 `title` 时，兜底从 `ssh.exec → 192.0.2.11`
+    改为「中文动作名 · 目标」（执行命令 / 查询数据库 / Git 操作），
+    历史记录不再出现一整列看不懂的英文。
+  * Skill 文档明确要求：`title` 必须是中文大白话（≤30 字），点名禁止用
+    `ssh.exec`、`query`、`run` 这类接口名当标题；同时压缩调用约束，
+    补上「同一签名会折叠成一张卡」的提示。
+
+ -- Bella <bella@localhost>  Sat, 31 Oct 2026 17:20:00 +0800
+
+agentkeyguard (1.2.1) unstable; urgency=medium
+
+  * 证书与域名：签发服务器证书时把本机全部非虚拟网卡 IP 都写进 SAN（上限 16 条）。
+    此前只写 public_base 一处，换一张网卡的地址访问就报「证书名字不匹配」——
+    装了根证书也照样提示不安全，因为那是「不匹配」不是「不信任」。
+  * 示例域名通用化：界面里不再出现具体主机名，示例统一 example.akg.arpa；
+    本机域名改由 /api/me 的 default_domain 渲染，换机器即为新名字。
+  * HTTPS 区块精简：从「域名 + 换发 + 三个下载 + 四个折叠步骤 + 三行诊断」压成
+    「状态一行 + 三个动作 + 域名一行 + 一个折叠」；DNS 重写的四种写法移入 README。
+  * 初始化完成页的根证书区块同步压缩，三个折叠合成一个，删掉重复解释。
+  * 审批工作台：同一会话签名的同类请求折叠成一张卡，支持「批准全部 N 条」；
+    批量批准逐条落审计（一次点击必须能追溯到每一次执行）；
+    「服务环境变量授权」并入同一列表，用 tag 区分，不再单独占一块。
+  * 初始化第三步可填首个接入密钥的名字，完成页直接给一条一次性接入链接
+    （10 分钟、核销即焚、带签名，与「添加密钥」完全同构）。
+
+ -- Bella <bella@localhost>  Sat, 31 Oct 2026 16:30:00 +0800
+
+agentkeyguard (1.2.0) unstable; urgency=medium
+
+  * 1.2.0 正式版：六轮联调（rc1~rc6）全部签字通过。
+  * 结构与安全：凭证适配器注册表（server 不再有类型分支）、规则引擎按通道
+    分作用域（sql / shell / git）、Git 通道（凭据经 GIT_ASKPASS 注入，不进
+    argv）、Agent 密钥体系（握手激活 + 专属密钥 + 吊销即 403）。
+  * 体验：设置页拆成四块、访问地址中枢（标注本机可用 / 手机可用）、
+    环境变量整段粘贴识别、顶栏审批徽标、凭证表单三条字段。
+  * 本轮联调修复：安装时提示已继承旧库并支持 AGK_FRESH=1；已初始化后
+    /setup 改成向导关闭页；bootstrap 根路径 302 到 /setup；Bark 输入归一化
+    （完整 URL / 域名+key / 纯 key）；Git 凭证只存站点+用户名+Token，仓库
+    地址由请求带并做同源校验；移除 WebAuthn / Face ID，保留 HTTPS 与证书
+    换发；新增一次性接入链接（10 分钟、核销即焚、打开即签发密钥）与会话
+    签名；已吊销记录可删除、旧密钥折叠；历史记录可展开查看命令原文。
+  * 1.2.0~rc1~rc6 的包与 tag 保留，供回滚。
+
+ -- Bella <bella@localhost>  Sat, 31 Oct 2026 15:10:00 +0800
+
+agentkeyguard (1.2.0~rc6) unstable; urgency=medium
+
+  * 找回历史记录的命令详情：每条记录可点开，展开后显示审批时的命令原文、
+    请求码、来源与拒绝原因。此前只能看到标题，排查问题得去翻审计日志。
+  * 顺带修正历史记录的时间显示：原来读的是 ts 字段，实际存的是 decided_at，
+    导致时间列一直为空。
+
+ -- Bella <bella@localhost>  Sat, 31 Oct 2026 14:40:00 +0800
+
+agentkeyguard (1.2.0~rc5) unstable; urgency=medium
+
+  * 联调第五批（多会话可辨识）：
+  * 「更新密钥」更名为「添加密钥」：每次生成都是一条新凭证，不是轮换。
+  * 生成前必须给密钥起名字（会话签名，≤32 字），如「Claude-桌面版」。
+    名字落到 agent 记录上，审批卡片、历史记录与手机推送标题都会显示，
+    多会话并行时不会认错是谁在请求。
+  * 实现走线程局部：鉴权时记下当前密钥，审批层直接读取，
+    ssh / pg / git 三条通道自动生效，适配器不用各改一遍。
+
+ -- Bella <bella@localhost>  Sat, 31 Oct 2026 14:05:00 +0800
+
+agentkeyguard (1.2.0~rc4) unstable; urgency=medium
+
+  * 联调第四批（Agent 列表可维护性）：
+  * 已吊销的 Agent 只保留「删除」按钮（连点两次确认）。删除仅对 revoked 开放，
+    避免手快删掉正在使用的密钥——在用或待审批的必须先吊销。
+  * 已吊销与旧版密钥（legacy）折进「已吊销 / 旧版密钥 N 条」分组，
+    多开几次会话不会把真正在用的那几条淹掉。
+  * 最近 Agent 读取：客户端未自报 X-Agent-Id 时回落为 ip:<来源地址>，
+    不再整列都是 unknown（记录仍按 5 分钟自动过期，属设计行为）。
+
+ -- Bella <bella@localhost>  Sat, 31 Oct 2026 13:10:00 +0800
+
+agentkeyguard (1.2.0~rc3) unstable; urgency=medium
+
+  * 联调第三批（Agent 接入体验）：
+  * 「已接入 Agent」的「刷新」按钮语义不清，改为红色「更新密钥」，需连点两次确认。
+  * 新增一次性接入链接：10 分钟内有效、只能核销一次。Agent 打开链接即当场签发
+    新密钥并写进那次响应，主人不必再分别复制 skill 地址与密钥两次。
+    票据只存 sha256，核销即焚，过期自动清理。
+  * 尚无 Agent 接入时的空态文案改为指向「更新密钥」，不再提示手动握手。
+  * /skill 的 profiles 列表里，git 凭证改用站点地址，不再显示空 host。
+  * SSH 凭证表单隐藏「私钥内容」录入；后端仍兼容读取旧的 private_key。
+
+ -- Bella <bella@localhost>  Sat, 31 Oct 2026 12:30:00 +0800
+
+agentkeyguard (1.2.0~rc2) unstable; urgency=medium
+
+  * 联调第二批（真机 8.7 暴露的问题）：
+  * 装包时若已存在旧配置库，安装输出明确提示「不会进入初始化向导」，
+    并支持 AGK_FRESH=1 dpkg -i 跳过旧数据迁移。
+  * 已初始化后访问 /setup 改为「配置页已失效，请前往 /dashboard 登录」，
+    不再复用完成页的「该配置只显示一次」—— 那是凭证页过期的语义。
+  * bootstrap 状态下根路径 / 直接 302 到 /setup，此前会落到 404。
+  * Bark 输入归一化：完整 URL、域名+key、纯 key 三种写法都接受，
+    保存与「测试」共用同一函数，避免「测试能通、保存后推不出去」。
+  * Git 凭证简化为三条：站点地址 + 用户名 + Token。仓库名不再进服务端，
+    由 /git/exec 的 url 参数携带，服务端校验 scheme/host/port 与登记站点
+    同源后才注入凭据；同一条凭证可服务多个仓库，仓库改名无需改动凭证。
+  * 移除 WebAuthn / Face ID / Windows Hello：登录只保留 密码 + TOTP
+    （1 小时会话）。HTTPS、CA、证书换发全部保留；依赖去掉 webauthn 与 cbor2。
+
+ -- Bella <bella@localhost>  Fri, 30 Oct 2026 23:50:00 +0800
+
+agentkeyguard (1.2.0~rc1) unstable; urgency=medium
+
+  * 本版为 1.2.0 联调候选：原 1.2.0（结构改造与安全）与原 1.3.0（设置页与
+    体验）两批改动合并为一次交付，代码内容不变，仅收敛版本号。
+
+  * 凭证类型改为适配器注册表：新增类型只加一个模块，server.py 不再有类型分支。
+  * 规则引擎增加通道作用域（sql / shell / git），修复 SQL 规则误伤 SSH 命令。
+  * 新增 Git 通道：clone/pull/fetch/log/diff/commit/push，凭据经 GIT_ASKPASS 注入、
+    不进 argv；强推、删远端分支等危险动作需人工审批。
+  * Gitea Token 加密入库，设置页可检测身份连通性（不推断权限）。
+  * Agent 密钥体系：/skill 文档不再含密钥；首次接入需提交自述并人工审批，
+    通过后获得专属密钥；未激活或已吊销的密钥直接 403 且不产生审批；
+    旧全局 token 自动迁移为 legacy agent，升级不中断现有集成。
+
+  * 访问地址中枢：/api/network/addresses 一次列全本机回环、局域网与虚拟网卡，
+    逐条标注「本机可用 / 手机可用」并可一键复制；WSL 镜像与 NAT 两种形态
+    分别给结论，镜像模式不再被误判成「手机一定连不上」。
+  * Public Base 三级取值：手动设置 → 本次请求的 Host → 探测值，不再写死旧 IP；
+    「当前生效地址」直接显示在访问地址卡里。
+  * 设置页拆分：Bark 与 Gitea 各带行内「测试」按钮，访问地址独立成套；
+    Gitea 检测只验身份，Bark 测试结果不回显 key。
+  * 环境变量录入：整段粘贴自动识别成键值对（全大写变量名为锚点，兼容
+    = / : / 空白 / 制表符与 export 前缀），去引号去首尾空白，识别不出的行
+    单独列出；提交前校验格式、重名、空值与超长，错误定位到具体行。
+  * 审批提醒：顶栏常驻徽标 + 红点 + 标题计数，点击直达审批工作台；
+    页面隐藏时轮询降频到 10 秒，全程不弹遮罩、不抢输入焦点。
+  * 生物识别前置检测：没有可用平台认证器时给中文说明，不再卡在系统对话框；
+    发起绑定带 60 秒超时，失败不影响密码 + 动态码登录。
+  * DNS 引导与证书文案通用化：只描述「把域名解析到本机地址」，不再出现
+    特定主机编号与单一产品名。
+
+ -- Bella <bella@localhost>  Thu, 29 Oct 2026 00:00:00 +0800
+
+
+agentkeyguard (1.1.2) unstable; urgency=medium
+
+  * 修复首次初始化在 systemd 下必定失败：ReadWritePaths 未放行 CA 目录，
+    签发证书时 OSError 30；顺带把 finish 改为先签证书后落 vault，失败即回滚，
+    不再留下「有密码没证书」的半初始化死状态。
+  * 修复初始化完成后必须重启才生效：证书与管理员状态改为进程内热加载，
+    完成页不再提示 systemctl restart。
+  * 彻底移除 mTLS 与客户端证书请求（tls_context 固定 CERT_NONE），
+    浏览器不再弹出「选择用于身份验证的证书」，选错证书导致握手失败一并消失。
+  * 证书 SAN 改用本机局域网 IP 并按需去重，Public Base 默认手机可访问地址，
+    保存新地址后自动换发证书。
+  * 表单校验错误给出中文说明（不再直接显示 weak_master 等内部错误码）。
+  * 配置完成页：主密码默认掩码+眼睛切换、TOTP 密钥分组显示与一键复制、间距调整。
+
+ -- Bella <bella@localhost>  Thu, 29 Oct 2026 00:00:00 +0800
+
+agentkeyguard (1.1.1) unstable; urgency=medium
+
+  * 登录拆为独立页面 /login：/dashboard 未登录由服务端 302 跳转，
+    不再先下发业务页面再由前端盖遮罩。
+  * 登录页六格动态码：自动跳格、退格回退、粘贴铺满、填满即提交。
+  * 移除控制台内嵌登录遮罩与解锁脚本，会话失效与主动锁定统一跳登录页。
+  * 修复 next 参数可被协议相对地址（//host）绕过的开放重定向。
+  * 修复带 query 的 /dashboard 漏判而返回 401 JSON 的路由问题。
+
+ -- Bella <bella@localhost>  Thu, 29 Oct 2026 00:00:00 +0800
+
+agentkeyguard (1.1.0) unstable; urgency=medium
+
+  * 模块化重构 + Debian 打包首发。
+  * 拆分为 config / crypto / storage / rules / pg_handler / ssh_handler /
+    approval / dashboard / webauthn / server / cli / selftest。
+  * 路径分离：配置 /etc/agentkeyguard，数据 /var/lib/agentkeyguard，
+    代码 /usr/lib/agentkeyguard。
+  * 新增 systemd 服务、专用系统用户与旧数据自动迁移。
+  * 加密格式零改动：MAGIC / AAD / SCRYPT 原值保留，旧 vault.enc 直接可用。
+
+ -- Bella <bella@localhost>  Mon, 26 Oct 2026 22:00:00 +0800

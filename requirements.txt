@@ -1,0 +1,6 @@
+cryptography>=42
+pg8000>=1.30
+paramiko>=3.4
+pymysql>=1.1
+redis>=5.0
+

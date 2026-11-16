@@ -1,0 +1,8 @@
+# 仓库统一存 LF，工作区也检出 LF。
+# 这份代码最终部署到 Debian，CRLF 会让部署时的 sha256 校验对不上。
+* text=auto eol=lf
+
+# 二进制素材不做换行转换
+*.png binary
+*.jpg binary
+*.ico binary

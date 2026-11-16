@@ -1,0 +1,22 @@
+Source: agentkeyguard
+Section: admin
+Priority: optional
+Maintainer: Bella <bella@localhost>
+Build-Depends: debhelper-compat (= 13), python3, python3-venv, python3-pip
+Standards-Version: 4.6.2
+Rules-Requires-Root: no
+
+Package: agentkeyguard
+Architecture: any
+Depends: ${misc:Depends}, python3, adduser, systemd
+Recommends: openssh-client
+Description: zero-credential broker for AI access to databases and servers
+ AgentKeyGuard is a local credential broker. A remote agent talks to it over
+ HTTP to use PostgreSQL / SSH, while the plaintext credentials only ever
+ exist in the daemon memory: never returned, never written to disk, never
+ placed in argv. Every operation must be approved on the owner phone.
+ .
+ This package installs the modular Python implementation, a systemd unit,
+ and separates configuration (/etc/agentkeyguard), data
+ (/var/lib/agentkeyguard) and code (/usr/lib/agentkeyguard) following the
+ Filesystem Hierarchy Standard.

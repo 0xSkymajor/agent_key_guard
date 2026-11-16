@@ -1,0 +1,7 @@
+#!/bin/sh
+set -e
+
+# 包源码装在 /usr/lib/agentkeyguard/agentkeyguard/，不在 venv 的 site-packages 里，
+# 因此把 /usr/lib/agentkeyguard 加进 PYTHONPATH，再用 venv 的解释器跑 -m。
+export PYTHONPATH="/usr/lib/agentkeyguard${PYTHONPATH:+:$PYTHONPATH}"
+exec /usr/lib/agentkeyguard/venv/bin/python -m agentkeyguard "$@"
