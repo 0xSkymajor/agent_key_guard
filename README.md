@@ -27,6 +27,47 @@ Agent 启动时向该地址取环境变量，值由 Broker 解密后注入进程
 2. **每次调用都要审批**：`/pg/query`、`/ssh/exec`、`/git/exec` 走审批队列，Bark 推到手机，批准才执行、拒绝带理由。
 3. **全量审计**：谁在什么时候读了哪个凭据、执行了什么命令，落盘可查。
 
+## 安装
+
+### Debian / Ubuntu（amd64）：用现成 deb
+
+从 [GitHub Releases](https://github.com/0xSkymajor/agent_key_guard/releases)
+或仓库 Packages 下载 `agentkeyguard_<version>_amd64.deb`：
+
+```bash
+sudo dpkg -i agentkeyguard_<version>_amd64.deb
+sudo systemctl status agentkeyguard
+```
+
+> 禁止 `dpkg -r` / `dpkg -P` 卸载：postrm 会一并删除 `/var/lib/agentkeyguard`（vault 在里面）。
+> 升级一律用 `dpkg -i` 覆盖。
+
+首次访问 `https://127.0.0.1:7700` 进入初始化向导：设置主密码、签发本机 CA 与证书、绑定 TOTP。
+
+### 其他 Linux 发行版 / 架构：从源码安装
+
+源码不绑定发行版，按目标机器架构现场装依赖即可：
+
+```bash
+git clone https://github.com/0xSkymajor/agent_key_guard.git && cd agent_key_guard
+python3 -m venv venv && . venv/bin/activate
+pip install -r requirements.txt
+```
+
+再按 `debian/agentkeyguard.service.in` 建 systemd unit：建 `agentkeyguard` 系统用户、
+`/etc/agentkeyguard` 与 `/var/lib/agentkeyguard`（0700），入口指向 `python -m agentkeyguard serve`。
+
+## 系统适配范围
+
+| 项目 | 支持情况 |
+| --- | --- |
+| Debian / Ubuntu | 官方 deb（amd64），开箱即用 |
+| 其他 systemd 发行版（Fedora / Arch / openSUSE 等） | 源码安装，依赖按本机架构现场安装 |
+| x86_64（amd64） | 源码 + 现成 deb 均支持 |
+| ARM64（aarch64）及其他架构 | 源码安装支持；**现成 deb 不支持**（内嵌 venv 含 x86_64 原生 `.so`） |
+| Windows / macOS | **不支持**：`/etc`、`/var/lib`、systemd、`PR_SET_DUMPABLE` 均为 Linux 专属 |
+| 无 systemd 环境 | 需自行托管进程，不提供官方 unit |
+
 ## 架构图
 
 ### 数据流向：真值只在 Broker 里
@@ -87,17 +128,6 @@ v1.4.1 收口了几处细节：登录页全宽构图与「协作流演示」、�
 ### 标签页图标
 
 ![favicon](docs/images/favicon.png)
-
-## 安装
-
-```bash
-sudo dpkg -i agentkeyguard_<version>_amd64.deb
-sudo systemctl status agentkeyguard
-```
-
-> 禁止 `dpkg -r` / `dpkg -P` 卸载：postrm 会一并删除 `/var/lib/agentkeyguard`（vault 在里面）。升级一律用 `dpkg -i` 覆盖。
-
-首次访问 `https://127.0.0.1:7700` 进入初始化向导：设置主密码、签发本机 CA 与证书、绑定 TOTP 与生物识别。
 
 ## 使用
 
@@ -211,7 +241,7 @@ PYTHONPATH=src python -m agentkeyguard selftest   # 自检
 - 不防 root 与物理接触：拿到 root 的人本来就能读内存、改代码；
 - SQL 分类是正则，宁可把语句判成写操作，已知会有误判；
 - 单管理员，没有 RBAC、多租户；
-- 只支持 Debian / Ubuntu + systemd（Python 3.11+）；
+- 系统与架构适配见上文「系统适配范围」：Debian / Ubuntu 有现成 deb，其他发行版与 ARM 走源码安装；
 - **不保护上下文数据本身**：代码、文档、对话内容仍会经过模型方/中转站；AKG 只保证凭证不进入这条链路；
 - 原生协议（PG / MySQL / Redis / SSH / git）代理，**不是 MCP 代理**——这是主动取舍，见 [ROADMAP](ROADMAP.md)。
 
