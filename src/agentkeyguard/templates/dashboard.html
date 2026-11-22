@@ -2169,9 +2169,14 @@ async function doDeleteService() {
     closeDelSvc(); toast('已删除'); loadServices();
   } catch (e) { toast(e.message, false); }
 }
+let envPendingBusy = false;
 async function loadEnvPending() {
   const box = $('pendingList');
   if (!box) return;
+  // 三个调用点（两个 interval + loadPending 内部）可能并发进入：
+  // 没有重入锁时两次都会先删卡、再各自插一张，同一请求就出现两张卡。
+  if (envPendingBusy) return;
+  envPendingBusy = true;
   const stale = $('envPendingCard');
   if (stale) stale.remove();
   try {
@@ -2180,6 +2185,9 @@ async function loadEnvPending() {
     if (!p) return;
     // 并入审批列表，靠 badge 区分两类，不再单独占一块（REQ-121）
     if (box.querySelector('.empty')) box.innerHTML = '';
+    // fetch 回来期间卡可能被 loadPending 重建过，插入前再清一次，杜绝重复卡
+    const dup = $('envPendingCard');
+    if (dup) dup.remove();
     box.insertAdjacentHTML('beforeend', '<article class="card" id="envPendingCard">' +
       '<div class="card-top"><h3>' + esc(p.title) + '</h3>' +
       '<span class="badge warn">服务变量</span>' +
@@ -2192,14 +2200,22 @@ async function loadEnvPending() {
       '<button class="ok" onclick="decideEnv(\'' + esc(p.request_id) + '\',\'yes\')">批准</button>' +
       '</div></div></article>');
   } catch (e) { /* 并入后不再单独报错，避免出现两个错误框 */ }
+  finally { envPendingBusy = false; }
 }
+let envDeciding = false;
 async function decideEnv(id, dec) {
+  // 连点/重复点击只发一次，避免第二次撞上已 pop 的 rid 报 not_found
+  if (envDeciding) return;
+  envDeciding = true;
+  const stale = $('envPendingCard');
+  if (stale) stale.remove();               // 立刻收卡，轮询也来不及再显示旧卡
   try {
     await api('/api/service/decision', {method: 'POST',
       body: JSON.stringify({request_id: id, decision: dec})});
     toast(dec === 'yes' ? '已批准' : '已拒绝');
     loadEnvPending(); loadServices();
   } catch (e) { toast(e.message, false); }
+  finally { envDeciding = false; }
 }
 async function loadSkill() {
   // Skill 文档入口现在是静态链接（/skill）；这里保留一个空实现，

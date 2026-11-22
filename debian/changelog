@@ -1,3 +1,22 @@
+agentkeyguard (1.4.4) unstable; urgency=medium
+
+  * v1.4.4 正式版。
+    - 修复环境变量服务审批的重复弹窗与末条 Not Found（见 1.4.4-rc2）；
+    - Skill 增加「耐心等待人工审批、不重试不放弃」的操作指引。
+
+  -- example-bot <agent@ai.com>  Sun, 22 Nov 2026 12:55:00 +0800
+
+agentkeyguard (1.4.4-rc2) unstable; urgency=medium
+
+  * v1.4.4-rc2：修复环境变量服务审批的重复弹窗与 Not Found。
+    - 环境变量服务请求加入指纹去重（对齐 1.4.3 普通审批路径）：同一服务同一组 key
+      的并发重试只挂一张卡、只推一条 Bark，复用同一审批结论；
+    - pending_head 过滤已决策条目，避免批准后被轮询再次显示旧卡；
+    - decide 改为幂等：重复点击已决策请求不再报 not_found；
+    - 前端 loadEnvPending 加重入锁与插入前去重，decideEnv 防连点并即时收卡。
+
+ -- example-bot <agent@ai.com>  Sun, 22 Nov 2026 11:50:00 +0800
+
 agentkeyguard (1.4.4-rc1) unstable; urgency=medium
 
   * v1.4.4-rc1：UI 细节收敛。

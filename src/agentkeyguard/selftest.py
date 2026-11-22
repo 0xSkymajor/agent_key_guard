@@ -1588,6 +1588,51 @@ def cmd_selftest(args) -> None:
         assert services.service_by_token(_sv, _t1) is not None, "未删除的服务 token 仍有效"
         print("OK（撤销保留记录 / 删除移出列表 / 重复删除返回 False / 删除后 token 失效）")
 
+        print("[62b] 服务审批去重 + pending 过滤 + 幂等决定 ……", end=" ")
+        # 回归：1.4.4-rc2 修「同一请求弹两次 + 点到最后 Not Found」
+        import threading as _th
+        _svc_vault = {}
+        _svc, _svc_tok = services.create_service(_svc_vault, "svc-dedup", {"DB_URL": "x"})
+        _svc_sid = _svc["id"]
+        services.PENDING.clear()
+        _results = {}
+        def _requester(tag):
+            # 两次「客户端重试」都等在同一条审批上（长超时，避免测试自身竞态）
+            _results[tag] = services.request_env(
+                _svc_vault, _svc_tok, ["DB_URL"], "10.0.0.1", "test", 5)
+        _t1 = _th.Thread(target=_requester, args=("r1",), daemon=True)
+        _t2 = _th.Thread(target=_requester, args=("r2",), daemon=True)
+        _t1.start(); _t2.start()
+        # 等两条请求都登记完（去重后应只有 1 条），再做决定
+        for _ in range(100):
+            if services.PENDING:
+                break
+            _th.Event().wait(0.02)
+        _th.Event().wait(0.05)   # 给第二个线程进入去重分支的时间
+        assert len(services.PENDING) == 1, f"指纹去重未生效，生成了 {len(services.PENDING)} 条 PENDING"
+        _h = services.pending_head()
+        assert _h, "审批人没拿到请求"
+        _rid = _h["request_id"]
+        services.decide(_rid, "yes")
+        _t1.join(6); _t2.join(6)
+        assert _results["r1"][0] == {"DB_URL": "x"} and _results["r2"][0] == {"DB_URL": "x"}, _results
+        # pending_head 不显示已决策条目：决定后队列即空
+        assert services.pending_head() is None, "已决策条目仍出现在 pending_head"
+        # decide 幂等：条目仍在 PENDING 时重复提交同一 rid 返回 True，且保留先到的结论
+        _eid = "idem-test"
+        services.PENDING[_eid] = {"request_id": _eid, "event": _th.Event(),
+                                  "decision": None, "service": "s", "sid": _svc_sid,
+                                  "keys": ["DB_URL"], "created": 0, "identity": ("x",)}
+        assert services.decide(_eid, "yes") is True, "首次决定应成功"
+        assert services.decide(_eid, "no") is True, "重复决定应幂等成功（不报 not_found）"
+        assert services.PENDING[_eid]["decision"] == "yes", "重复决定覆盖了先到结论"
+        services.PENDING.clear()
+        # 前端重入锁与防连点标志存在
+        _dh = (Path(dashboard.__file__).parent / "templates" / "dashboard.html").read_text(encoding="utf-8")
+        assert "envPendingBusy" in _dh and "envDeciding" in _dh, "前端缺防重入/防连点"
+        services.PENDING.clear()
+        print("OK（指纹去重一次审批 / 已决策不出队 / 决定幂等 / 前端防重入）")
+
         print("[63] Gitea 已彻底移出设置 ……", end=" ")
         from . import server as _srv
         _v = {"settings": {"gitea_base": "http://192.0.2.10:3000",

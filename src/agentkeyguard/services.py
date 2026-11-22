@@ -154,18 +154,36 @@ def request_env(vault: dict, token: str, keys, ip: str, ua: str,
     if not want:
         return None, "empty_env", 403
 
-    rid = secrets.token_hex(8)
-    ev = threading.Event()
-    entry = {"request_id": rid, "event": ev, "decision": None,
-             "service": s["name"], "sid": _sid, "keys": want,
-             "ip": ip, "ua": (ua or "")[:200], "created": time.time()}
+    # 指纹去重：客户端超时重试会把同一条 env 请求发两遍（1.4.3 在普通审批路径
+    # 已经用 approval_identity 修过，env 服务路径当时漏了）。同一服务、同一组
+    # key、且上一条还在等审批时，复用它的结论，不再新建卡片、不再推一条 Bark。
+    # 只有「仍在等待」的才算孪生；已决策/已 pop 的都是正常的新请求，不合并。
+    identity = (_sid, tuple(sorted(want)))
     with _LOCK:
-        PENDING[rid] = entry
-    threading.Thread(target=_notify, args=(rid, s["name"], want), daemon=True).start()
+        twin = next((e for e in PENDING.values()
+                     if not e.get("decision") and e.get("identity") == identity), None)
+        if twin is None:
+            rid = secrets.token_hex(8)
+            ev = threading.Event()
+            entry = {"request_id": rid, "event": ev, "decision": None,
+                     "service": s["name"], "sid": _sid, "keys": want,
+                     "ip": ip, "ua": (ua or "")[:200], "created": time.time(),
+                     "identity": identity}
+            PENDING[rid] = entry
+            owner = True
+        else:
+            entry = twin
+            owner = False
 
-    ok = ev.wait(timeout)
-    with _LOCK:
-        PENDING.pop(rid, None)
+    if owner:
+        threading.Thread(target=_notify, args=(rid, s["name"], want), daemon=True).start()
+
+    # 主请求和孪生请求都等同一个 Event；只有 owner 负责推送和清理。
+    # 这样一次审批只推一条 Bark、只显示一张卡，两条请求都拿到相同结论。
+    ok = entry["event"].wait(timeout)
+    if owner:
+        with _LOCK:
+            PENDING.pop(rid, None)
     if not ok:
         return None, "timeout", 408
     if entry.get("decision") != "yes":
@@ -175,8 +193,16 @@ def request_env(vault: dict, token: str, keys, ip: str, ua: str,
 
 
 def pending_head() -> dict | None:
+    """只返回「还在等」的那一条（和 approval.pending_head 同语义）。
+
+    曾经不过滤已决策条目：点了「批准」后、request_env 线程还没 pop 的那一瞬间，
+    旧卡片会被下一次 3 秒轮询再次显示出来；再点一次就是对一个已消失的 rid 决策，
+    services.decide 返回 False → /api/service/decision 报 404。这是「点到最后一个
+    弹 Not Found」的根因。已决策的不再展示，队列数也只算真正等待中的。
+    """
     with _LOCK:
-        items = sorted(PENDING.values(), key=lambda e: e["created"])
+        items = [e for e in PENDING.values() if not e.get("decision")]
+        items.sort(key=lambda e: e["created"])
         if not items:
             return None
         e = items[0]
@@ -186,10 +212,17 @@ def pending_head() -> dict | None:
 
 
 def decide(rid: str, decision: str, reason: str = "") -> bool:
+    """幂等：条目存在即视为成功（已决策过的重复点击直接忽略，不覆盖结论）。
+
+    和 /api/approve 的语义对齐——同一条决策重复提交不该报 not_found。
+    只有 rid 根本不存在（超时已 pop / 伪造）才返回 False。
+    """
     with _LOCK:
         e = PENDING.get(rid)
         if not e:
             return False
+        if e.get("decision"):
+            return True                      # 重复点击：保留先到的结论，直接 OK
         e["decision"] = "yes" if decision == "yes" else "no"
         e["reason"] = str(reason or "")[:500]
         e["event"].set()
