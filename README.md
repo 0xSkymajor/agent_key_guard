@@ -29,6 +29,10 @@ Agent 启动时向该地址取环境变量，值由 Broker 解密后注入进程
 
 ## 安装
 
+> **推荐让 AI 来装。** 本项目天然面向 AI 环境——把下面这句话发给你的 AI 助手，它会按目标机器的发行版和架构自行选择 deb 或源码、现场调整步骤；你也可以自由描述自己的环境让它改进。
+>
+> > 「按 https://github.com/0xSkymajor/agent_key_guard 的 README，在本机安装 AgentKeyGuard（amd64 可用现成 deb，其他发行版 / ARM 走源码），systemd unit 的安全参数照抄 `debian/agentkeyguard.service.in`，装完提示我打开 `https://<本机IP>:7700` 初始化。」
+
 ### Debian / Ubuntu（amd64）：用现成 deb
 
 从 [GitHub Releases](https://github.com/0xSkymajor/agent_key_guard/releases)
